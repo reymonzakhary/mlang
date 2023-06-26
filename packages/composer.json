@@ -17,7 +17,6 @@
         "php": "^8.1",
         "ext-filter": "*",
         "illuminate/database": "^10.13",
-        "doctrine/dbal": "^3.6",
         "illuminate/support": "^10.13"
     }
 }

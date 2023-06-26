@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Upon\Mlang\Contracts\MlangContractInterface;
+use Upon\Mlang\Models\MlangModel;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
-class Category extends Model implements MlangContractInterface
+class Category extends MlangModel
 {
-    use HasFactory, MlangTrait;
+    use HasFactory;
 
     protected $fillable = [
         'name','slug'
