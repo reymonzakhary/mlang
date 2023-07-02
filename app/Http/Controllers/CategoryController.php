@@ -10,6 +10,8 @@ class CategoryController extends Controller
 
     public function index()
     {
-        dd(Category::get());
+        $category = Category::whereSlug('aut-quasi-nostrum-sed-asperiores-ut-ratione-temporibus')->first()
+            ->products()->create(['iso' => 'ar', 'name' => 'producwtss3' , 'slug' => 'prod3uctwss']);
+        dd($category);
     }
 }

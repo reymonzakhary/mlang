@@ -3,6 +3,8 @@
 namespace Upon\Mlang\Console;
 
 use Illuminate\Console\Command;
+use Upon\Mlang\Columns\AddRowIdColumn;
+use Upon\Mlang\Models\MlangModel;
 
 class MLangMigrateCommand extends Command
 {
@@ -11,7 +13,7 @@ class MLangMigrateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'app:m-lang-migrate-command';
+    protected $signature = 'mlang:migrate';
 
     /**
      * The console command description.
@@ -25,6 +27,22 @@ class MLangMigrateCommand extends Command
      */
     public function handle()
     {
-        //
+        $this->addCollumToModels();
+    }
+
+    private function addCollumToModels():void
+    {
+        $tables =  (new MlangModel())->getTableNames();
+
+        if(empty($tables)) {
+            $this->info("No tables were found.");
+        }
+
+        foreach ($tables as $table) {
+            if($table) {
+                AddRowIdColumn::up($table);
+                $this->info("Column has been added to {$table} table.");
+            }
+        }
     }
 }

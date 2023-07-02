@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Upon\Mlang\Models\MlangModel;
-use Upon\Mlang\Models\Traits\MlangTrait;
 
 class Category extends MlangModel
 {
@@ -13,4 +13,12 @@ class Category extends MlangModel
     protected $fillable = [
         'name','slug'
     ];
+
+    /**
+     * @return HasMany
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
 }

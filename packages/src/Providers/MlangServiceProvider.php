@@ -13,10 +13,10 @@ class MlangServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(MlangContractInterface::class, function ($app) {
-           return new Mlang($app);
-        });
-        $this->app->alias(Mlang::class, 'm-lang');
+        $this->configure();
+        $this->offerPublishing();
+        $this->registerMlang();
+        $this->registerCommands();
     }
 
     /**
@@ -28,6 +28,30 @@ class MlangServiceProvider extends ServiceProvider
     }
 
     /**
+     * Setup the configuration for Mlang.
+     *
+     * @return void
+     */
+    protected function configure()
+    {
+        $this->mergeConfigFrom(__DIR__.'/../../config/mlang.php', 'mlang');
+    }
+
+    /**
+     * Setup the resource publishing group for Mlang.
+     *
+     * @return void
+     */
+    protected function offerPublishing()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../../config/mlang.php' => config_path('mlang.php'),
+            ], 'mlang');
+        }
+    }
+
+    /**
      * Register the MLang commands.
      *
      * @return void
@@ -36,9 +60,22 @@ class MlangServiceProvider extends ServiceProvider
     {
             if ($this->app->runningInConsole()) {
                 $this->commands([
-                    Upon\Mlang\Console\MLangMigrateCommand::class,
+                    \Upon\Mlang\Console\MLangMigrateCommand::class,
             ]);
         }
+    }
+
+    /**
+     * Register the application bindings.
+     *
+     * @return void
+     */
+    protected function registerMlang()
+    {
+        $this->app->bind(MlangContractInterface::class, function ($app) {
+            return new Mlang($app);
+        });
+        $this->app->alias('mlang', 'Upon\Mlang');
     }
 
 }

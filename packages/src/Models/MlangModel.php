@@ -3,18 +3,30 @@
 namespace Upon\Mlang\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 use Upon\Mlang\Contracts\MlangContractInterface;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
 class MlangModel extends Model implements MlangContractInterface
 {
     use MlangTrait;
+
+    protected $fillable = [
+        'iso'
+    ];
+
     /**
      * The database table used by the model.
      *
      * @var string
      */
     protected $table;
+
+    /**
+     * The models list what used for migrating the new columns to it.
+     * @var array|mixed
+     */
+    protected array $models = [];
 
     /**
      * Creates a new instance of the model.
@@ -26,5 +38,20 @@ class MlangModel extends Model implements MlangContractInterface
     {
         parent::__construct($attributes);
         $this->table = $this->getTable();
+        $this->models = Config::get('mlang.models');
     }
+
+
+
+
+    /**
+     * Collect all tables name from the giving models.
+     *
+     * @return array
+     */
+    public function getTableNames(): array
+    {
+        return collect($this->models)->map(fn($model) => app($model)->table)->toArray();
+    }
+
 }

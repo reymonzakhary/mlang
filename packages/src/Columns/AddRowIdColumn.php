@@ -19,7 +19,7 @@ class AddRowIdColumn extends Migration
     {
         $sm = Schema::getConnection()->getDoctrineSchemaManager();
         $indexesFound = $sm->listTableIndexes($table);
-        collect(array_keys($indexesFound))->filter(fn($c) => Str::contains($c, 'unique'))->all();
+        $uniqueIndexesFound = collect(array_keys($indexesFound))->filter(fn($c) => Str::contains($c, 'unique'))->all();
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
                 Schema::table($table, function (Blueprint $table) {
