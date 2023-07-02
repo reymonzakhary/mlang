@@ -13,11 +13,9 @@ class MlangObserver
 
     public function creating(Model $model)
     {
-        dump($model->iso);
-//        if(!$model?->iso) {
-//            dd(!$model?->iso);
-//            $model->iso = App::getLocale();
-//        }
+        if(!$model?->iso) {
+            $model->iso = App::getLocale();
+        }
     }
 
     /**

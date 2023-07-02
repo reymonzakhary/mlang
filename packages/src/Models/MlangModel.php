@@ -11,9 +11,7 @@ class MlangModel extends Model implements MlangContractInterface
 {
     use MlangTrait;
 
-    protected $fillable = [
-        'iso'
-    ];
+    private $fill = ['iso'];
 
     /**
      * The database table used by the model.
@@ -36,6 +34,7 @@ class MlangModel extends Model implements MlangContractInterface
      */
     public function __construct(array $attributes = [])
     {
+        $this->fillable = array_merge($this->fillable, $this->fill);
         parent::__construct($attributes);
         $this->table = $this->getTable();
         $this->models = Config::get('mlang.models');
