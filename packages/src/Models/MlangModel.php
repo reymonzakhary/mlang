@@ -11,7 +11,7 @@ class MlangModel extends Model implements MlangContractInterface
 {
     use MlangTrait;
 
-    private $fill = ['iso'];
+    private $fill = ['iso','row_id'];
 
     /**
      * The database table used by the model.
@@ -53,4 +53,12 @@ class MlangModel extends Model implements MlangContractInterface
         return collect($this->models)->map(fn($model) => app($model)->table)->toArray();
     }
 
+    /**
+     * return all models full namespaces.
+     * @return array
+     */
+    public function getModels(): array
+    {
+        return $this->models;
+    }
 }

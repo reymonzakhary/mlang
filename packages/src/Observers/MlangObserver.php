@@ -9,7 +9,7 @@ use Upon\Mlang\Traits\UpdateRowIdTrait;
 
 class MlangObserver
 {
-    use UpdateBaseIdTrait, UpdateRowIdTrait;
+    use UpdateRowIdTrait;
 
     public function creating(Model $model)
     {
@@ -24,7 +24,6 @@ class MlangObserver
     public function created(Model $model): void
     {
         $this->updateRowId($model);
-        $this->updateBaseId($model);
     }
 
     /**

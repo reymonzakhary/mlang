@@ -12,7 +12,7 @@ class Product extends MlangModel
     use HasFactory;
 
     protected $fillable = [
-        'name', 'slug'
+        'name', 'slug','category_id'
     ];
 
     /**
