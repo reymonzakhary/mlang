@@ -1,4 +1,4 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+#High-Performance Multi-Language Package for Laravel
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
@@ -7,60 +7,102 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+This package is a high-performance solution designed to provide efficient multi-language support for Laravel applications. It offers robust features and optimizations to ensure fast and reliable language management, making your application accessible to a global audience without sacrificing performance.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+##Features
+* [Accelerated translation retrieval](#Accelerated translation retrieval): Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
+* [Seamless integration with Laravel](#Seamless integration with Laravel): The package integrates seamlessly with Laravel, leveraging its existing localization infrastructure while providing performance enhancements.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+* [Translation helpers](#Translation helpers): You can use helper functions and methods to translate your application's content into different languages. These helpers make it easy to retrieve and display translated strings.
+* [Language detection](#Language detection): The package includes automatic language detection based on the user's browser settings. It also supports manual language selection for users.
+* [Language fallbacks](#Language fallbacks): If a translation is missing for a specific language, the package supports fallbacks to default or alternative languages. This ensures that users always see content in a supported language.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+* PHP >= 7.4
+* Laravel >= 8.0 
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Installation
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1 - Install the package using Composer:
+```php
+composer require upon/mlang
+```
+2 - Publish the package configuration and language files:
+```php
+php artisan vendor:publish --tag="mlang"
+```
+3 - Configure the package by modifying the ``config/mlang.php`` file according to your requirements.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+You can specify the supported locales, default locale, language file path, and other options.\
+Add the locale middleware to your app/Http/Kernel.php file in the $middlewareGroups property:
+```php
+ protected $middlewareGroups = [
+'web' => [
+// ...
+\YourVendorName\MultiLanguagePackage\Middleware\SetLocale::class,
+],
 
-## Laravel Sponsors
+    // ...
+];
+```
+Use the provided helper functions and methods to translate your application's content. For example:
+```php
+// Retrieve a translated string
+echo __('messages.welcome');
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+// Translate a string with placeholders
+echo __('messages.greeting', ['name' => 'John']);
+```
+## Usage
+###Managing Language Files
+* To add a new language file, use the following command:
+```php
+/** Replace {locale} with the desired language code (e.g., en for English).  */
+php artisan multi-language-package:add-language {locale}
+```
+* To edit an existing language file, use the following command:
+```php
+php artisan multi-language-package:edit-language {locale}
+```
+* To delete a language file, use the following command:
+```php
+php artisan multi-language-package:delete-language {locale}
+```
 
-### Premium Partners
+###Localization URLs
+By default, the package uses URL localization by appending language codes to your application's URLs. For example:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+> /**en**/about for the English version of the "about" page.
+> 
+> /**fr**/about for the French version of the "about" page
 
-## Contributing
+To generate localized URLs, you can use the localized_url() helper function:
+```php
+$url = localized_url('about');
+```
+This will generate the appropriate localized URL based on the current language.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Language Detection and Selection
+The package includes automatic language detection based on the user's browser's language. It uses the Accept-Language header or browser settings to determine the preferred language.
 
-## Code of Conduct
+To manually set the language for a user, you can use the setLocale() method:
+```php
+/** Replace {locale} with the desired language code. */
+app()->setLocale('{locale}');
+```
+###Contributing
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Contributions are welcome! If you encounter any issues, have suggestions, or want to contribute to the package, please create an issue or submit a pull request on the package's GitHub repository.
 
-## Security Vulnerabilities
+###License
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+This package is open-source software licensed under the MIT license. Feel free to use, modify, and distribute it as per the terms of the license.
 
-## License
+Credits
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This package was developed by Your Name. Special thanks to the Laravel community for their support and inspiration.
+
+Contact
+
+If you have any questions or need further assistance, you can reach out to the package maintainer at your-email@example.com.
