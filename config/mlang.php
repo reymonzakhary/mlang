@@ -15,4 +15,8 @@ return [
         \App\Models\Product::class
     ],
 
+    'languages' => ['ar','nl','en'],
+
+    'default_language' =>''
+
 ];

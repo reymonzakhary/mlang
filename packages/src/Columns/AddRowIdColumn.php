@@ -23,13 +23,7 @@ class AddRowIdColumn extends Migration
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
                 Schema::table($table, function (Blueprint $table) {
-                    $table->unsignedBigInteger('row_id')->after('id')->index()->nullable();
-                });
-            }
-
-            if (!Schema::hasColumn($table, 'base_id')) {
-                Schema::table($table, function (Blueprint $table) {
-                    $table->unsignedBigInteger('base_id')->index()->nullable();
+                    $table->unsignedBigInteger('row_id')->index()->nullable();
                 });
             }
 

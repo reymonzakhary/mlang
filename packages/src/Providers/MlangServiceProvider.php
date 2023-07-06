@@ -61,6 +61,7 @@ class MlangServiceProvider extends ServiceProvider
             if ($this->app->runningInConsole()) {
                 $this->commands([
                     \Upon\Mlang\Console\MLangMigrateCommand::class,
+                    \Upon\Mlang\Console\MLangGenerateCommand::class,
             ]);
         }
     }
