@@ -3,8 +3,11 @@
 namespace Upon\Mlang\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
+use JetBrains\PhpStorm\Pure;
 use Upon\Mlang\Contracts\MlangContractInterface;
+use Upon\Mlang\Models\Builders\MlangBuilder;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
 class MlangModel extends Model implements MlangContractInterface
@@ -60,5 +63,22 @@ class MlangModel extends Model implements MlangContractInterface
     public function getModels(): array
     {
         return $this->models;
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder|MlangBuilder
+     */
+    public static function query(): \Illuminate\Database\Eloquent\Builder|MlangBuilder
+    {
+        return parent::query();
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder|MlangBuilder
+     */
+    #[Pure] public function newEloquentBuilder($query): Builder|MlangBuilder
+    {
+        return new MlangBuilder($query);
     }
 }

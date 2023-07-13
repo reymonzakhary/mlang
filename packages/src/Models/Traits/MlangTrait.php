@@ -2,8 +2,7 @@
 
 namespace Upon\Mlang\Models\Traits;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Support\Facades\App;
+use Illuminate\Database\Eloquent\Model;
 use Upon\Mlang\Observers\MlangObserver;
 
 trait MlangTrait
@@ -12,9 +11,23 @@ trait MlangTrait
     public static function bootMlangTrait()
     {
         (new static)->registerObserver(MlangObserver::class);
+
     }
 
-
+//    /**
+//     * @param mixed $value
+//     * @param null  $field
+//     * @return \never
+//     */
+//    public function resolveRouteBinding($value, $field = null)
+//    {
+//        return $this->where([['row_id', (int)$value], ['iso', app()->getLocale()]])->first() ??
+//            abort(404, __("Model not Found."));
+//    }
+//
+//    /**
+//     * @return string
+//     */
 //    public function getKeyName()
 //    {
 //        return 'row_id';
