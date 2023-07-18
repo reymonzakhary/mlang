@@ -8,6 +8,7 @@ use Upon\Mlang\Mlang;
 
 class MlangServiceProvider extends ServiceProvider
 {
+
     /**
      * Register services.
      */
@@ -25,6 +26,7 @@ class MlangServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(dirname(__DIR__,2) . '/database/migrations');
+
     }
 
     /**

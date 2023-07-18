@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Builder;
 class MlangBuilder  extends Builder
 {
 
+    public function addTranslation(
+        array $attributes = [],
+        $iso = null
+    )
+    {
+
+    }
     /**
      * Get a model with where query
      *

@@ -3,11 +3,12 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Use MorphMap in relationships between models
+    | List of models
     |--------------------------------------------------------------------------
     |
-    | If true, the morphMap feature is going to be used. The array values that
-    | are going to be used are the ones inside the 'user_models' array.
+    | Add a list of modules you like to use it for translations
+    | this will be used for the migrations to add new columns
+    | to the listed models.
     |
     */
     'models' => [
@@ -19,29 +20,33 @@ return [
     | application languages
     |--------------------------------------------------------------------------
     |
-    | all the models which extend the MlangModel will have records with those languages.
+    | All the models which extend the MlangModel will have records with those languages.
     |
     */
-    'languages' => [],
-
-    /*
-    |--------------------------------------------------------------------------
-    | default application language
-    |--------------------------------------------------------------------------
-    |
-    | returning the default language for the user's browser language and set it to the application.
-    |
-    */
-    'default_language' => '',
+    'languages' => [
+        'en',
+//        'nl'
+    ],
 
     /*
     |--------------------------------------------------------------------------
     | fallback application language
     |--------------------------------------------------------------------------
     |
-    | returning the fallback language if there's no default language.
+    | The package will determines if there are nog language found then will get the fallback language from the database.
+    | You are free to change it to any locale you need.
     |
     */
-    'fallback_language' => '',
+    'fallback_language' => 'en',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto generate language records
+    |--------------------------------------------------------------------------
+    |
+    | If true, it will generate copies of the created record with all languages are added into the config.
+    |
+    */
+    'auto_generate' => true,
 
 ];

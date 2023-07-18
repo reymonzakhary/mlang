@@ -16,6 +16,7 @@ class MlangObserver
         if(!$model?->iso) {
             $model->iso = App::getLocale();
         }
+
     }
 
     /**

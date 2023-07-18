@@ -17,6 +17,11 @@ This package is a high-performance solution designed to provide efficient multi-
 * [Language detection](#Language detection): The package includes automatic language detection based on the user's browser settings. It also supports manual language selection for users.
 * [Language fallbacks](#Language fallbacks): If a translation is missing for a specific language, the package supports fallbacks to default or alternative languages. This ensures that users always see content in a supported language.
 
+#### Notice
+This package will add two extra columns to the model you will use, row_id and iso.
+
+* [row_id](#row_id): This column will hold the main primary key for you on all languages. 
+* [iso](#iso): This column holding the language key, e.g. en,nl,fr,etc... 
 ## Requirements
 
 * PHP >= 7.4
@@ -34,25 +39,35 @@ php artisan vendor:publish --tag="mlang"
 ```
 3 - Configure the package by modifying the ``config/mlang.php`` file according to your requirements.
 
-You can specify the supported locales, default locale, language file path, and other options.\
+You can specify the supported locales, default locale, models, and other options.\
 Add the locale middleware to your app/Http/Kernel.php file in the $middlewareGroups property:
+To detect the user browser language.
+
 ```php
  protected $middlewareGroups = [
 'web' => [
 // ...
-\YourVendorName\MultiLanguagePackage\Middleware\SetLocale::class,
+\Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class,
 ],
 
     // ...
 ];
 ```
-Use the provided helper functions and methods to translate your application's content. For example:
-```php
-// Retrieve a translated string
-echo __('messages.welcome');
+4 - Configure in your mlang config file the needed model for translations. 
 
-// Translate a string with placeholders
-echo __('messages.greeting', ['name' => 'John']);
+```php
+// ...
+'models' => [
+    \App\Models\Category::class,
+    \App\Models\Product::class,
+    // ...
+]
+// ...
+```
+5 - Run the migration command to migrate the new columns, to the added models.
+
+```shell
+    php artisan mlang:migrate
 ```
 ## Usage
 ###Managing Language Files
