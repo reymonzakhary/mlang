@@ -107,14 +107,6 @@ php artisan mlang:generate {model|all} {locale}
 php artisan mlang:remove {table} {locale}
 ```
 
-###Localization URLs
-By default, the package uses `appLocale` localization to switch the language of your application's. For example:
-
-> /**en**/about for the English version of the "about" page.
-> 
-> /**fr**/about for the French version of the "about" page
-
-
 - The package includes automatic language detection based on the user's browser's language. It uses the Accept-Language header or browser settings to determine the preferred language.
     - <span style="color: #1589F0;">(Optional)</span> Add the locale middleware to your app/Http/Kernel.php file in the $middlewareGroups property:
       To detect the user browser language.
