@@ -2,8 +2,6 @@
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
@@ -28,7 +26,6 @@ This package will add two extra columns to the model you will use, row_id and is
 * Laravel >= 8.0 
 
 ## Installation
-
 1 - Install the package using Composer:
 ```php
 composer require upon/mlang
@@ -68,6 +65,12 @@ class Category extends MlangModel
 
 ```shell
     php artisan mlang:migrate
+```
+
+###Requirement
+*** This package requires the following package. ***
+```php
+composer require doctrine/dbal
 ```
 
 ###Managing Translations to existing records
