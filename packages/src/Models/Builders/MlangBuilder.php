@@ -3,24 +3,17 @@
 namespace Upon\Mlang\Models\Builders;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class MlangBuilder  extends Builder
 {
-
-    public function addTranslation(
-        array $attributes = [],
-        $iso = null
-    )
-    {
-
-    }
     /**
      * Get a model with where query
      *
      * @param array $attributes
      * @return \Illuminate\Database\Query\Builder
      */
-    public function whereLanguage(
+    public function trWhere(
         array $attributes = []
     ): \Illuminate\Database\Query\Builder
     {
@@ -34,9 +27,12 @@ class MlangBuilder  extends Builder
      *
      * @param string|int $id
      * @param null $iso
-     * @return MlangBuilder
+     * @return Model|null
      */
-    public function findByLanguage(string|int $id, $iso = null)
+    public function trfind(
+        string|int $id,
+        $iso = null
+    ): Model|null
     {
         $iso = $iso ?? app()->getLocale();
         return $this->where('iso', '=', $iso)->where("row_id", '=', $id)->first();

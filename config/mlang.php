@@ -1,6 +1,17 @@
 <?php
 
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Models path
+    |--------------------------------------------------------------------------
+    |
+    | Add the default models path.
+    |
+    */
+    'default_models_path' => 'App\\Models\\',
+
     /*
     |--------------------------------------------------------------------------
     | List of models
@@ -14,6 +25,7 @@ return [
     'models' => [
         \App\Models\Category::class,
         \App\Models\Product::class,
+        \App\Models\Box::class,
     ],
 
     /*
@@ -26,7 +38,8 @@ return [
     */
     'languages' => [
         'en',
-//        'nl'
+        'nl',
+        'ar'
     ],
 
     /*

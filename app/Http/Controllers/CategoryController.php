@@ -10,9 +10,11 @@ class CategoryController extends Controller
 
     public function index()
     {
+        app()->setLocale('ar');
+//        return Category::trfind(1);
         $category = Category::create([
-            'name' => 'reymodeeeeenwe',
-            'slug' => 'reyeedmeeoenwe'
+            'name' => 'reymodeeeeeenwe',
+            'slug' => 'reyeedmeeeoenwe'
         ]);
 //
         return $category;

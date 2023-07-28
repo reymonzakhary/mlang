@@ -39,20 +39,8 @@ php artisan vendor:publish --tag="mlang"
 ```
 3 - Configure the package by modifying the ``config/mlang.php`` file according to your requirements.
 
-You can specify the supported locales, default locale, models, and other options.\
-Add the locale middleware to your app/Http/Kernel.php file in the $middlewareGroups property:
-To detect the user browser language.
+You can specify the supported locales, default locale, models, and other options.
 
-```php
- protected $middlewareGroups = [
-'web' => [
-// ...
-\Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class,
-],
-
-    // ...
-];
-```
 4 - Configure in your mlang config file the needed model for translations. 
 
 ```php
@@ -64,48 +52,89 @@ To detect the user browser language.
 ]
 // ...
 ```
-5 - Run the migration command to migrate the new columns, to the added models.
+
+5- Replace the default extended Model with the `MlangModel`.
+
+```php
+<?php
+// ...
+use Upon\Mlang\Models\MlangModel;
+
+class Category extends MlangModel
+{
+    // ...
+```
+6 - Run the migration command to migrate the new columns, to the added models.
 
 ```shell
     php artisan mlang:migrate
 ```
-## Usage
-###Managing Language Files
-* To add a new language file, use the following command:
+
+###Managing Translations to existing records
+* To generate translations for existing rows, use the following command:
 ```php
-/** Replace {locale} with the desired language code (e.g., en for English).  */
-php artisan multi-language-package:add-language {locale}
+php artisan mlang:generate
 ```
-* To edit an existing language file, use the following command:
+* To generate in a specific table, use the following command:
 ```php
-php artisan multi-language-package:edit-language {locale}
+/** Replace {model} with the desired model you need 
+ * (e.g., category or in subdirectory dir\\Category).
+ * This using the default model path [App\\Models]
+ * you can update the model path in the config file.  
+ */
+php artisan mlang:generate {model}
 ```
-* To delete a language file, use the following command:
+
+* To generate a specific language code, use the following command:
 ```php
-php artisan multi-language-package:delete-language {locale}
+/** 
+ * all to run all models or specify one model name (e.g., Sub\\Category).
+ * Replace {locale} with the desired language code (e.g., en for English).
+ */
+php artisan mlang:generate {model|all} {locale}
+```
+
+
+* To delete a language from table, use the following command:
+```php
+/**
+ * Replace {locale} with the desired language code (e.g., en for English).
+ * Replace {table} with the desired table name (e.g., categories).  
+ */
+php artisan mlang:remove {table} {locale}
 ```
 
 ###Localization URLs
-By default, the package uses URL localization by appending language codes to your application's URLs. For example:
+By default, the package uses `appLocale` localization to switch the language of your application's. For example:
 
 > /**en**/about for the English version of the "about" page.
 > 
 > /**fr**/about for the French version of the "about" page
 
-To generate localized URLs, you can use the localized_url() helper function:
-```php
-$url = localized_url('about');
-```
-This will generate the appropriate localized URL based on the current language.
 
-Language Detection and Selection
-The package includes automatic language detection based on the user's browser's language. It uses the Accept-Language header or browser settings to determine the preferred language.
+- The package includes automatic language detection based on the user's browser's language. It uses the Accept-Language header or browser settings to determine the preferred language.
+    - <span style="color: #1589F0;">(Optional)</span> Add the locale middleware to your app/Http/Kernel.php file in the $middlewareGroups property:
+      To detect the user browser language.
+
+```php
+ protected $middlewareGroups = [
+'web' => [
+// ...
+\Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class,
+],
+
+    // ...
+];
+```
 
 To manually set the language for a user, you can use the setLocale() method:
 ```php
 /** Replace {locale} with the desired language code. */
 app()->setLocale('{locale}');
 ```
+
+## Usage
+
 ###Contributing
 
 Contributions are welcome! If you encounter any issues, have suggestions, or want to contribute to the package, please create an issue or submit a pull request on the package's GitHub repository.
@@ -116,8 +145,8 @@ This package is open-source software licensed under the MIT license. Feel free t
 
 Credits
 
-This package was developed by Your Name. Special thanks to the Laravel community for their support and inspiration.
+This package was developed by Reymon Zakhary. Special thanks to the Laravel community for their support and inspiration.
 
 Contact
 
-If you have any questions or need further assistance, you can reach out to the package maintainer at your-email@example.com.
+If you have any questions or need further assistance, you can reach out to the package maintainer at reymon@charisma-design.eu.

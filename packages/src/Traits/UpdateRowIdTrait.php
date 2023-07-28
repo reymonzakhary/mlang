@@ -10,11 +10,10 @@ trait UpdateRowIdTrait
     public function updateRowId($model){
         if(!$model->row_id) {
             $model->row_id = $model->id;
-        }
-        $model->save();
-
-        if(config('mlang.auto_generate')) {
-           MlangCreateJob::dispatch($model);
+            $model->save();
+            if(config('mlang.auto_generate') && !app()->runningInConsole()) {
+                MlangCreateJob::dispatch($model);
+            }
         }
     }
 

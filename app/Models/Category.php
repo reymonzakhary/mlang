@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Upon\Mlang\Models\MlangModel;
 
-class Category extends Model
+class Category extends MlangModel
 {
     use HasFactory;
 

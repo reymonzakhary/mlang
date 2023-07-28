@@ -4,9 +4,7 @@ namespace Upon\Mlang\Columns;
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 class AddRowIdColumn extends Migration
 {
@@ -17,9 +15,6 @@ class AddRowIdColumn extends Migration
         $table
     ): void
     {
-        $sm = Schema::getConnection()->getDoctrineSchemaManager();
-        $indexesFound = $sm->listTableIndexes($table);
-        $uniqueIndexesFound = collect(array_keys($indexesFound))->filter(fn($c) => Str::contains($c, 'unique'))->all();
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
                 Schema::table($table, function (Blueprint $table) {
@@ -34,12 +29,4 @@ class AddRowIdColumn extends Migration
             }
         }
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        //
-    }
-};
+}
