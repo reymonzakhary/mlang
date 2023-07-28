@@ -23,9 +23,7 @@ return [
     |
     */
     'models' => [
-        \App\Models\Category::class,
-        \App\Models\Product::class,
-        \App\Models\Box::class,
+
     ],
 
     /*
@@ -38,8 +36,7 @@ return [
     */
     'languages' => [
         'en',
-        'nl',
-        'ar'
+//        'nl'
     ],
 
     /*

@@ -5,6 +5,7 @@ namespace Upon\Mlang\Traits;
 trait UpdateBaseIdTrait
 {
     /**
+     *
      * @param $model
      */
     public function updateBaseId($model): void
