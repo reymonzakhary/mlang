@@ -10,8 +10,33 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $category = Category::whereSlug('aut-quasi-nostrum-sed-asperiores-ut-ratione-temporibus')->first()
-            ->products()->create(['iso' => 'ar', 'name' => 'producwtss3' , 'slug' => 'prod3uctwss']);
-        dd($category);
+        $category = Category::create([
+            'name' => 'reymodeeeeenwe',
+            'slug' => 'reyeedmeeoenwe'
+        ]);
+//
+        return $category;
+//        app()->setLocale('en');
+        dd(Category::query()->find( 88, 'nl'));
+//        $category = Category::whereSlug('aut-quasi-nostrum-sed-asperiores-ut-ratione-temporibus')->first()
+//            ->products()->create(['iso' => 'ar', 'name' => 'producwtss3' , 'slug' => 'prod3uctwss']);
+//        dd($category);
+    }
+
+    public function store(
+        Request $request
+    )
+    {
+        $category = Category::createToLanguage([
+            [
+                'name' => 'exc',
+                'iso' => 'en'
+            ],[
+                'name' => 'exc',
+                'iso' => 'nl'
+            ]
+        ]);
+
+        Category::where(['iso' => 'en', 'id' => 1])->first();
     }
 }

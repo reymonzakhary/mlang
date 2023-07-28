@@ -45,7 +45,7 @@ class MLangGenerateCommand extends Command
 
             collect($model)->map(function ($record) use ($namespace,$languages){
 
-                if (($key = array_search($record->iso, $languages)) !== false) {
+                if (($key = array_search($record->iso, $languages, true)) !== false) {
                     unset($languages[$key]);
                 }
                 collect($languages)->map(function ($language) use ($namespace,$record){

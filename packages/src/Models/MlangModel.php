@@ -5,7 +5,6 @@ namespace Upon\Mlang\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
-use JetBrains\PhpStorm\Pure;
 use Upon\Mlang\Contracts\MlangContractInterface;
 use Upon\Mlang\Models\Builders\MlangBuilder;
 use Upon\Mlang\Models\Traits\MlangTrait;
@@ -42,9 +41,6 @@ class MlangModel extends Model implements MlangContractInterface
         $this->table = $this->getTable();
         $this->models = Config::get('mlang.models');
     }
-
-
-
 
     /**
      * Collect all tables name from the giving models.
