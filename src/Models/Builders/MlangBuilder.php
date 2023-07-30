@@ -2,6 +2,7 @@
 
 namespace Upon\Mlang\Models\Builders;
 
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,16 +11,20 @@ class MlangBuilder  extends Builder
     /**
      * Get a model with where query
      *
-     * @param array $attributes
-     * @return \Illuminate\Database\Query\Builder
+     * @param array|string|\Closure|Expression $attributes
+     * @return MlangBuilder
      */
     public function trWhere(
-        array $attributes = []
-    ): \Illuminate\Database\Query\Builder
+        array|string|\Closure|Expression $attributes = []
+    ): MlangBuilder
     {
         $func_get_args = func_get_args();
         array_walk_recursive($func_get_args, static fn(&$v) => $v !== 'id'?:$v = 'row_id');
-        return $this->query->where(...$func_get_args);
+
+        $this->query->where(...$func_get_args)
+            ->where('iso', app()->getLocale());
+
+        return $this;
     }
 
     /**
@@ -29,7 +34,7 @@ class MlangBuilder  extends Builder
      * @param null $iso
      * @return Model|null
      */
-    public function trfind(
+    public function trFind(
         string|int $id,
         $iso = null
     ): Model|null
