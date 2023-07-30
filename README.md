@@ -10,12 +10,12 @@ This package is a high-performance solution designed to provide efficient multi-
 ## Features
 
 * [Accelerated translation retrieval](#Acceleratedtranslationretrieval): Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
-* [Seamless integration with Laravel](#Seamless integration with Laravel): The package integrates seamlessly with Laravel, leveraging its existing localization infrastructure while providing performance enhancements.
+* [Seamless integration with Laravel](#SeamlessintegrationwithLaravel): The package integrates seamlessly with Laravel, leveraging its existing localization infrastructure while providing performance enhancements.
 
 
-* [Translation helpers](#Translation helpers): You can use helper functions and methods to translate your application's content into different languages. These helpers make it easy to retrieve and display translated strings.
-* [Language detection](#Language detection): The package includes automatic language detection based on the user's browser settings. It also supports manual language selection for users.
-* [Language fallbacks](#Language fallbacks): If a translation is missing for a specific language, the package supports fallbacks to default or alternative languages. This ensures that users always see content in a supported language.
+* [Translation helpers](#Translationhelpers): You can use helper functions and methods to translate your application's content into different languages. These helpers make it easy to retrieve and display translated strings.
+* [Language detection](#Languagedetection): The package includes automatic language detection based on the user's browser settings. It also supports manual language selection for users.
+* [Language fallbacks](#Languagefallbacks): If a translation is missing for a specific language, the package supports fallbacks to default or alternative languages. This ensures that users always see content in a supported language.
 
 #### Notice
 This package will add two extra columns to the model you will use, row_id and iso.
