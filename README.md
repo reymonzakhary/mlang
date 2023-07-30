@@ -1,4 +1,4 @@
-#High-Performance Multi-Language Package for Laravel
+# High-Performance Multi-Language Package for Laravel
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
@@ -7,9 +7,11 @@
 
 This package is a high-performance solution designed to provide efficient multi-language support for Laravel applications. It offers robust features and optimizations to ensure fast and reliable language management, making your application accessible to a global audience without sacrificing performance.
 
-##Features
-* [Accelerated translation retrieval](#Accelerated translation retrieval): Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
+## Features
+
+* [Accelerated translation retrieval](#Acceleratedtranslationretrieval): Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
 * [Seamless integration with Laravel](#Seamless integration with Laravel): The package integrates seamlessly with Laravel, leveraging its existing localization infrastructure while providing performance enhancements.
+
 
 * [Translation helpers](#Translation helpers): You can use helper functions and methods to translate your application's content into different languages. These helpers make it easy to retrieve and display translated strings.
 * [Language detection](#Language detection): The package includes automatic language detection based on the user's browser settings. It also supports manual language selection for users.
@@ -26,7 +28,6 @@ The package will use the row_id as id, to grep the right row from the db.
 * PHP >= 7.4
 * Laravel >= 8.0 
 
-###Requirement
 *** This package requires the following package. ***
 ```php
 composer require doctrine/dbal
