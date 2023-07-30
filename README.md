@@ -17,6 +17,7 @@ This package is a high-performance solution designed to provide efficient multi-
 
 #### Notice
 This package will add two extra columns to the model you will use, row_id and iso.
+The package will use the row_id as id, to grep the right row from the db. 
 
 * [row_id](#row_id): This column will hold the main primary key for you on all languages. 
 * [iso](#iso): This column holding the language key, e.g. en,nl,fr,etc... 
@@ -129,6 +130,18 @@ app()->setLocale('{locale}');
 ```
 
 ## Usage
+
+To find a record from db by id, you can use the following. \
+This will get the translated record based on the current language has been used by your application.
+```php
+    Model::trFind(1);
+```
+The trWhere method will work like the normal where but will map the `id` to `row_id` column to be able selecting the current language.
+This will return a build,  so you can chain on it with other query.
+```php
+    /** This will get a collection based on the current language*/
+    Model::trWhere(['name' => 'test'])->get();
+```
 
 ###Contributing
 
