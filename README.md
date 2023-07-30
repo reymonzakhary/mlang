@@ -26,6 +26,12 @@ The package will use the row_id as id, to grep the right row from the db.
 * PHP >= 7.4
 * Laravel >= 8.0 
 
+###Requirement
+*** This package requires the following package. ***
+```php
+composer require doctrine/dbal
+```
+
 ## Installation
 1 - Install the package using Composer:
 ```php
@@ -68,11 +74,7 @@ class Category extends MlangModel
     php artisan mlang:migrate
 ```
 
-###Requirement
-*** This package requires the following package. ***
-```php
-composer require doctrine/dbal
-```
+
 
 ###Managing Translations to existing records
 * To generate translations for existing rows, use the following command:
