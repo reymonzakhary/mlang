@@ -37,6 +37,7 @@ return [
     */
     'primary_type' => 'bigint', // bigint|uld
 
+
     /*
     |--------------------------------------------------------------------------
     | application languages

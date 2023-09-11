@@ -19,11 +19,9 @@ class AddRowIdColumn extends Migration
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
                 Schema::table($table, function (Blueprint $table) {
-                    if(Config::get('mlang.primary_type') === 'bigint') {
-                        $table->unsignedBigInteger('row_id')->index()->nullable();
-                    }else{
+                    Config::get('mlang.primary_type') === 'bigint'?
+                        $table->unsignedBigInteger('row_id')->index()->nullable():
                         $table->ulid('row_id')->index()->nullable();
-                    }
                 });
             }
 
