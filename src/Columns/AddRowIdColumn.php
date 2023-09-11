@@ -13,15 +13,14 @@ class AddRowIdColumn extends Migration
      * Run the migrations.
      */
     public static function up(
-        $table
+        $table,
+        $model
     ): void
     {
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
-                Schema::table($table, function (Blueprint $table) {
-                    Config::get('mlang.primary_type') === 'bigint'?
-                        $table->unsignedBigInteger('row_id')->index()->nullable():
-                        $table->ulid('row_id')->index()->nullable();
+                Schema::table($table, function (Blueprint $table) use ($model) {
+                    $table->foreignIdFor($model, 'row_id')->index()->nullable();
                 });
             }
 

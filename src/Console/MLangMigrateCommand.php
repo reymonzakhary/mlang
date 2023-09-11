@@ -32,15 +32,17 @@ class MLangMigrateCommand extends Command
 
     private function addCollumToModels():void
     {
+        $models = (new MlangModel())->getModels();
         $tables =  (new MlangModel())->getTableNames();
+
 
         if(empty($tables)) {
             $this->info("No tables were found.");
         }
 
-        foreach ($tables as $table) {
+        foreach ($tables as $k => $table) {
             if($table) {
-                AddRowIdColumn::up($table);
+                AddRowIdColumn::up($table, "\\".$models[$k]);
                 $this->info("Column has been added to {$table} table.");
             }
         }
