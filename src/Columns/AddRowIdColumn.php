@@ -4,6 +4,7 @@ namespace Upon\Mlang\Columns;
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
 class AddRowIdColumn extends Migration
@@ -18,7 +19,11 @@ class AddRowIdColumn extends Migration
         if(Schema::hasTable($table)) {
             if(!Schema::hasColumn($table, 'row_id')) {
                 Schema::table($table, function (Blueprint $table) {
-                    $table->unsignedBigInteger('row_id')->index()->nullable();
+                    if(Config::get('mlang.primary_type') === 'bigint') {
+                        $table->unsignedBigInteger('row_id')->index()->nullable();
+                    }else{
+                        $table->ulid('row_id')->index()->nullable();
+                    }
                 });
             }
 
