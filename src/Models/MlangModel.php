@@ -3,10 +3,9 @@
 namespace Upon\Mlang\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Support\Facades\Config;
 use Upon\Mlang\Contracts\MlangContractInterface;
-use Upon\Mlang\Models\Builders\MlangBuilder;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
 class MlangModel extends Model implements MlangContractInterface
@@ -62,19 +61,37 @@ class MlangModel extends Model implements MlangContractInterface
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Builder|MlangBuilder
+     * Get a model with where query
+     *
+     * @param array|string|\Closure|Expression $attributes
+     * @return MlangModel
      */
-    public static function query(): \Illuminate\Database\Eloquent\Builder|MlangBuilder
+    public function scopeTrWhere(
+        array|string|\Closure|Expression $attributes = []
+    ): MlangModel
     {
-        return parent::query();
+        $func_get_args = func_get_args();
+        array_walk_recursive($func_get_args, static fn(&$v) => $v !== 'id'?:$v = 'row_id');
+
+        $this->query->where(...$func_get_args)
+            ->where('iso', app()->getLocale());
+
+        return $this;
     }
 
     /**
-     * @param Builder $query
-     * @return Builder|MlangBuilder
+     * Find a model by its primary key.
+     *
+     * @param string|int $id
+     * @param null $iso
+     * @return Model|null
      */
-    #[Pure] public function newEloquentBuilder($query): Builder|MlangBuilder
+    public function scopeTrFind(
+        string|int $id,
+        $iso = null
+    ): Model|null
     {
-        return new MlangBuilder($query);
+        $iso = $iso ?? app()->getLocale();
+        return $this->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
     }
 }
