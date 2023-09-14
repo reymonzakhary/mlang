@@ -66,7 +66,7 @@ class MlangModel extends Model implements MlangContractInterface
      * @param array|string|\Closure|Expression $attributes
      * @return MlangModel
      */
-    public function trWhere(
+    public function scopeTrWhere(
         array|string|\Closure|Expression $attributes = []
     ): MlangModel
     {
@@ -86,7 +86,7 @@ class MlangModel extends Model implements MlangContractInterface
      * @param null $iso
      * @return Model|null
      */
-    public function trFind(
+    public function scopeTrFind(
         string|int $id,
         $iso = null
     ): Model|null
