@@ -56,25 +56,30 @@ class MLangGenerateCommand extends Command
             $sm = Schema::getConnection()->getDoctrineSchemaManager();
             $indexesFound = $sm->listTableIndexes($table);
             $uniqueIndexesFound = collect(array_keys($indexesFound))->map(fn($c) =>
-                Str::contains($c, 'unique') === false ?null: Str::replace(["{$table}_", '_unique'],['', ''],$c)
+            Str::contains($c, 'unique') === false ?null: Str::replace(["{$table}_", '_unique'],['', ''],$c)
             )->filter()->toArray();
-            $namespace::get()->map(function ($record) use ($namespace, $uniqueIndexesFound){
+            $count = 0;
+            $namespace::get()->map(function ($record) use ($namespace, $uniqueIndexesFound,&$count){
                 $record->row_id?? $record->update(['row_id'=>$record->id, 'iso' => Config::get('app.locale')]);
-
                 collect($this->languages)
                     ->reject(fn($language) =>
-                        in_array($language, $record->where('row_id', $record->row_id)->pluck('iso')->toArray(), true)
+                    in_array($language, $record->where('row_id', $record->row_id)->pluck('iso')->toArray(), true)
                     )
-                    ->each(function ($language) use ($namespace,$record, $uniqueIndexesFound){
+                    ->each(function ($language) use ($namespace,$record, $uniqueIndexesFound, &$count){
                         $row = collect($record)->except('id')->toArray();
                         $row = array_merge($row, ['iso' => $language]);
                         collect($uniqueIndexesFound)->each(function($key) use (&$row){
                             $row = array_merge($row, [$key => optional($row)[$key]. '_' . Str::random(3)]);
                         });
-                    $namespace::create($row);
-                });
+                        try {
+                            $namespace::create($row);
+                            $count++;
+                        } catch (\Exception $e) {
+                            $this->info(__("We could not generate translations for row {$record?->id}, exception: {$e->getMessage()}"));
+                        }
+                    });
             });
-            $this->info(__("Generating translations of {$table} has been completed successfully."));
+            $this->info(__("{$count} translations has been generated for {$table} successfully."));
         });
     }
 
