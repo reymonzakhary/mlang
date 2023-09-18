@@ -58,6 +58,7 @@ You can specify the supported locales, default locale, models, and other options
 // ...
 ```
 
+
 5- Replace the default extended Model with the `MlangModel`.
 
 ```php
