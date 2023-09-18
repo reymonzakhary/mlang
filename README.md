@@ -25,7 +25,7 @@ The package will use the row_id as id, to grep the right row from the db.
 * [iso](#iso): This column holding the language key, e.g. en,nl,fr,etc... 
 ## Requirements
 
-* PHP >= 8.2
+* PHP >= 8.1
 * Laravel >= 10.0 
 
 *** This package requires the following package. ***
