@@ -18,5 +18,11 @@
         "ext-filter": "*",
         "illuminate/database": "^10.13",
         "illuminate/support": "^10.13"
+    },
+
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan package:discover --ansi"
+        ]
     }
 }
