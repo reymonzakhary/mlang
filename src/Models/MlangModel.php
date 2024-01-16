@@ -94,4 +94,23 @@ class MlangModel extends Model implements MlangContractInterface
         $iso = $iso ?? app()->getLocale();
         return $this->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
     }
+
+    public function scopeTrGet(
+        Builder $builder,
+                $iso = null,
+                ...$column
+    ): Model|null
+    {
+        //dedicated lang
+        $iso =$iso ??  app()->getLocale();
+        //if no parameters and git all columns
+        if(empty($column))
+            return $builder->where('iso', '=', $iso)->get();
+        //cast parameters in one array
+        $columns = array();
+        array_walk_recursive($column, function($temp) use (&$columns) {
+            $columns[] = $temp;
+        });
+        return $builder->where('iso', '=', $iso)->get($columns);
+    }
 }
