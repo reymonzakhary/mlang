@@ -18,5 +18,12 @@
         "ext-filter": "*",
         "illuminate/database": "^10.13",
         "illuminate/support": "^10.13"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Upon\\Mlang\\Providers\\MlangServiceProvider"
+            ]
+        }
     }
 }
