@@ -2,6 +2,7 @@
 
 namespace Upon\Mlang\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Support\Facades\Config;
@@ -35,6 +36,7 @@ class MlangModel extends Model implements MlangContractInterface
      */
     public function __construct(array $attributes = [])
     {
+        $this->hasUlid();
         $this->fillable = array_merge($this->fillable, $this->fill);
         parent::__construct($attributes);
         $this->table = $this->getTable();
@@ -93,5 +95,14 @@ class MlangModel extends Model implements MlangContractInterface
     {
         $iso = $iso ?? app()->getLocale();
         return $this->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
+    }
+
+    /**
+     * @return void
+     */
+    protected function hasUlid(): void
+    {
+        !in_array(HasUlids::class, class_uses_recursive($this), true)?:
+            $this->fill = array_merge($this->fill, ['id']);
     }
 }

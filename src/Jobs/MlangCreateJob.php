@@ -22,7 +22,8 @@ class MlangCreateJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public Model $model
+        public Model $model,
+        public bool $ulid  = false
     ){}
 
     /**
@@ -34,7 +35,7 @@ class MlangCreateJob implements ShouldQueue
         $row_id = $this->model->row_id;
         collect(Config::get('mlang.languages'))->reject(fn($language) =>
             $this->model->iso === $language
-        )->each(function($language) use ($row_id) {
+        )->each(function($language) use ($row_id, ) {
             $table = $this->model->getTable();
             $sm = Schema::getConnection()->getDoctrineSchemaManager();
             $indexesFound = $sm->listTableIndexes($table);
@@ -43,11 +44,26 @@ class MlangCreateJob implements ShouldQueue
             )->filter()->toArray();
             $row = $this->model->toArray();
             $row = array_merge($row, ['iso' => $language, 'row_id' => $row_id]);
+
             unset($row['id']);
+            if($this->ulid) {
+                $row = array_merge($row, ['id' => $this->newUniqueId()]);
+            }
             collect($uniqueIndexesFound)->each(function($key) use (&$row){
                 $row = array_merge($row, [$key => optional($row)[$key]. '_' . Str::random(3)]);
             });
-            $this->model::create($row);
+
+            get_class($this->model)::create($row);
         });
+    }
+
+    /**
+     * Generate a new ULID for the model.
+     *
+     * @return string
+     */
+    public function newUniqueId()
+    {
+        return strtolower((string) Str::ulid());
     }
 }
