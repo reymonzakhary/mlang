@@ -13,6 +13,18 @@ class MlangModel extends Model implements MlangContractInterface
 {
     use MlangTrait;
 
+    /**
+     * The column is the key what used for route middle binding.
+     * You can change it to the default id or other column.
+     * Default is row id to switch the language directly.
+     *
+     * @var string
+     */
+    public string $column = 'row_id';
+
+    /**
+     * @var string[]
+     */
     private $fill = ['iso','row_id'];
 
     /**
@@ -29,6 +41,12 @@ class MlangModel extends Model implements MlangContractInterface
     protected array $models = [];
 
     /**
+     * The model name give the current used model name.
+     * @var string
+     */
+    protected string $model_name;
+
+    /**
      * Creates a new instance of the model.
      *
      * @param  array  $attributes
@@ -41,6 +59,7 @@ class MlangModel extends Model implements MlangContractInterface
         parent::__construct($attributes);
         $this->table = $this->getTable();
         $this->models = Config::get('mlang.models');
+        $this->getModelName();
     }
 
     /**
@@ -60,6 +79,27 @@ class MlangModel extends Model implements MlangContractInterface
     public function getModels(): array
     {
         return $this->models;
+    }
+
+    /**
+     * get the current namespace
+     * @return void
+     */
+    public function getModelName(): void
+    {
+        $model = explode('\\', get_class($this));
+        $this->model_name = array_pop($model);
+    }
+
+    /**
+     * @param mixed $value
+     * @param null  $field
+     * @return mixed
+     */
+    public function resolveRouteBinding($value, $field = null): mixed
+    {
+        return $this->where([[$this->column, $value], ['iso', app()->getLocale()]])->first() ??
+            abort(404, __("Not Found -- There is no {$this->model_name} found"));
     }
 
     /**
