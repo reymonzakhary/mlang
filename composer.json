@@ -1,6 +1,7 @@
 {
     "name": "upon/mlang",
     "description": "Multilanguage package working for large databases, and fast response",
+    "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -14,10 +15,10 @@
         }
     ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "ext-filter": "*",
-        "illuminate/database": "^10.13",
-        "illuminate/support": "^10.13"
+        "illuminate/database": "^v11.44.7|12.*",
+        "illuminate/support": "^v11.44.7|12.*"
     },
     "extra": {
         "laravel": {
