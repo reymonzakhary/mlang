@@ -7,6 +7,19 @@
 
 This package is a high-performance solution designed to provide efficient multi-language support for Laravel applications. It offers robust features and optimizations to ensure fast and reliable language management, making your application accessible to a global audience without sacrificing performance.
 
+## Version Compatibility
+
+This package follows Laravel’s major versioning for compatibility.
+
+| Package Version | Supported Laravel Versions |
+|-----------------|-----------------------------|
+| `^1.0`          | Laravel 10.x                |
+| `^2.0`          | Laravel 11.x, 12.x          |
+
+> **Note:** If you are using Laravel 11 or 12, please use version `^2.0` of this package.  
+> For Laravel 10, continue using version `^1.0`.
+> 
+> 
 ## Features
 
 * [Accelerated translation retrieval](#Acceleratedtranslationretrieval): Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
