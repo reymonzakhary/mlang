@@ -24,7 +24,10 @@
         "laravel": {
             "providers": [
                 "Upon\\Mlang\\Providers\\MlangServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "MLang": "Upon\\Mlang\\Facades\\MLang"
+            }
         }
     }
 }

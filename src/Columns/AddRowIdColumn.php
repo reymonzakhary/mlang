@@ -4,7 +4,6 @@ namespace Upon\Mlang\Columns;
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
 class AddRowIdColumn extends Migration
@@ -27,6 +26,33 @@ class AddRowIdColumn extends Migration
             if (!Schema::hasColumn($table, 'iso')) {
                 Schema::table($table, function (Blueprint $table) {
                     $table->string('iso')->nullable();
+                });
+            }
+        }
+    }
+
+    /**
+     * Rollback the migrations.
+     */
+    public static function down(
+        $table
+    ): void
+    {
+        if(Schema::hasTable($table)) {
+            // Check if columns exist before attempting to drop them
+            $hasRowId = Schema::hasColumn($table, 'row_id');
+            $hasIso = Schema::hasColumn($table, 'iso');
+
+            // If either column exists, modify the table
+            if($hasRowId || $hasIso) {
+                Schema::table($table, function (Blueprint $table) use ($hasRowId, $hasIso) {
+                    if($hasRowId) {
+                        $table->dropColumn('row_id');
+                    }
+
+                    if($hasIso) {
+                        $table->dropColumn('iso');
+                    }
                 });
             }
         }
