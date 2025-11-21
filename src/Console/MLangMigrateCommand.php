@@ -4,7 +4,7 @@ namespace Upon\Mlang\Console;
 
 use Illuminate\Console\Command;
 use Upon\Mlang\Columns\AddRowIdColumn;
-use Upon\Mlang\Facades\Mlang;
+use Upon\Mlang\Facades\MLang;
 
 class MLangMigrateCommand extends Command
 {
@@ -45,8 +45,8 @@ class MLangMigrateCommand extends Command
         ?string $specificTable = null
     ): void
     {
-        $models = Mlang::getModels();
-        $tables = Mlang::getTableNames();
+        $models = MLang::getModels();
+        $tables = MLang::getTableNames();
 
         if (empty($tables)) {
             $this->info("No tables were found.");

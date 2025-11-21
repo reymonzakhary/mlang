@@ -1,17 +1,45 @@
 {
     "name": "upon/mlang",
-    "description": "Multilanguage package working for large databases, and fast response",
+    "description": "High-performance multi-language support for Laravel with security enhancements, bulk operations, and intuitive API. Efficiently manage translations with minimal database overhead.",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "laravel",
+        "multilingual",
+        "translation",
+        "i18n",
+        "localization",
+        "language",
+        "multi-language",
+        "eloquent",
+        "database",
+        "performance"
+    ],
+    "homepage": "https://github.com/reymonzakhary/mlang",
+    "support": {
+        "issues": "https://github.com/reymonzakhary/mlang/issues",
+        "source": "https://github.com/reymonzakhary/mlang"
+    },
     "autoload": {
         "psr-4": {
             "Upon\\Mlang\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Upon\\Mlang\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Reymon Zakhary",
-            "email": "reymon@charisma-design.eu"
+            "email": "reymon@charisma-design.eu",
+            "homepage": "https://charisma-design.eu",
+            "role": "Developer"
+        },
+        {
+            "name": "Charisma Design",
+            "homepage": "https://chd.com.eg"
         }
     ],
     "require": {
@@ -19,6 +47,9 @@
         "ext-filter": "*",
         "illuminate/database": "^v11.44.7|12.*",
         "illuminate/support": "^v11.44.7|12.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0|^11.0"
     },
     "extra": {
         "laravel": {
@@ -29,5 +60,7 @@
                 "MLang": "Upon\\Mlang\\Facades\\MLang"
             }
         }
-    }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

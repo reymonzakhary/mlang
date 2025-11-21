@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Upon\Mlang\Mlang;
+use Upon\Mlang\MLang;
 
 class MlangServiceProvider extends ServiceProvider
 {
@@ -78,12 +78,12 @@ class MlangServiceProvider extends ServiceProvider
      */
     protected function registerCommands(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                \Upon\Mlang\Console\MLangMigrateCommand::class,
-                \Upon\Mlang\Console\MLangGenerateCommand::class,
-            ]);
-        }
+        // Always register commands so they can be called via Artisan::call()
+        // from both console and HTTP contexts
+        $this->commands([
+            \Upon\Mlang\Console\MLangMigrateCommand::class,
+            \Upon\Mlang\Console\MLangGenerateCommand::class,
+        ]);
     }
 
     /**
@@ -94,7 +94,7 @@ class MlangServiceProvider extends ServiceProvider
     protected function registerMlang(): void
     {
         $this->app->bind('mlang', function ($app) {
-            return new Mlang($app);
+            return new MLang($app);
         });
         // Register the facade
         $this->registerFacade();
@@ -284,7 +284,7 @@ class MlangServiceProvider extends ServiceProvider
                 return false;
             }
 
-            $tables = \Upon\Mlang\Facades\Mlang::getTableNames();
+            $tables = \Upon\Mlang\Facades\MLang::getTableNames();
 
             if (empty($tables)) {
                 $this->output->writeln('<comment>No tables defined in MLang config</comment>');
@@ -319,6 +319,6 @@ class MlangServiceProvider extends ServiceProvider
         $loader = AliasLoader::getInstance();
 
         // Register the facade
-        $loader->alias('MLang', \Upon\Mlang\Facades\Mlang::class);
+        $loader->alias('MLang', \Upon\Mlang\Facades\MLang::class);
     }
 }

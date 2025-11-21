@@ -5,10 +5,10 @@ namespace Upon\Mlang\Console;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Upon\Mlang\Facades\Mlang;
+use Upon\Mlang\Facades\MLang;
+use Upon\Mlang\Helpers\TranslationHelper;
 
 class MLangGenerateCommand extends Command
 {
@@ -66,13 +66,10 @@ class MLangGenerateCommand extends Command
                 return;
             }
 
-            // Get unique indexes in a version-compatible way
-            $uniqueIndexesFound = $this->getUniqueIndexes($table);
-
             $count = 0;
             $defaultLocale = Config::get('app.locale');
 
-            $namespace::query()->each(function ($record) use ($namespace, $uniqueIndexesFound, &$count, $defaultLocale) {
+            $namespace::query()->each(function ($record) use ($namespace, $model, &$count, $defaultLocale) {
                 // Ensure row_id exists
                 if (empty($record->row_id)) {
                     $record->update(['row_id' => $record->id, 'iso' => $defaultLocale]);
@@ -87,16 +84,12 @@ class MLangGenerateCommand extends Command
                 // Process each language that doesn't have a translation yet
                 collect($this->languages)
                     ->reject(fn($language) => in_array($language, $existingTranslations, true))
-                    ->each(function ($language) use ($namespace, $record, $uniqueIndexesFound, &$count) {
+                    ->each(function ($language) use ($namespace, $model, $record, &$count) {
                         $row = collect($record->getAttributes())->except('id')->toArray();
                         $row = array_merge($row, ['iso' => $language]);
 
-                        // Handle unique fields
-                        foreach ($uniqueIndexesFound as $key) {
-                            if (isset($row[$key])) {
-                                $row[$key] = $row[$key] . '_' . Str::random(3);
-                            }
-                        }
+                        // Use TranslationHelper to properly handle unique constraints
+                        $row = TranslationHelper::handleUniqueConstraints($model, $row, $language);
 
                         try {
                             $namespace::create($row);
@@ -130,65 +123,13 @@ class MLangGenerateCommand extends Command
     }
 
     /**
-     * Get unique indexes for a table in a version-compatible way
-     *
-     * @param string $table
-     * @return array
-     */
-    private function getUniqueIndexes(string $table): array
-    {
-        try {
-            // For Laravel 10+
-            if (method_exists(Schema::class, 'getConnection')) {
-                $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes($table);
-                return collect($indexes)
-                    ->filter(fn($index) => $index->isUnique() && !$index->isPrimary())
-                    ->map(function($index) use ($table) {
-                        $columns = $index->getColumns();
-                        return count($columns) === 1 ? $columns[0] : null;
-                    })
-                    ->filter()
-                    ->values()
-                    ->toArray();
-            }
-
-            // Alternative approach using raw DB queries for compatibility
-            $driverName = DB::connection()->getDriverName();
-
-            if ($driverName === 'mysql' || $driverName === 'mariadb') {
-                $indexes = DB::select("SHOW INDEXES FROM {$table} WHERE Non_unique = 0 AND Key_name != 'PRIMARY'");
-                return collect($indexes)
-                    ->pluck('Column_name')
-                    ->unique()
-                    ->toArray();
-            } elseif ($driverName === 'pgsql') {
-                $indexes = DB::select("
-                    SELECT a.attname
-                    FROM pg_index i
-                    JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-                    WHERE i.indrelid = '{$table}'::regclass
-                    AND i.indisunique AND NOT i.indisprimary
-                ");
-                return collect($indexes)->pluck('attname')->toArray();
-            }
-
-            // Fallback to empty array if driver not supported
-            return [];
-
-        } catch (\Throwable $e) {
-            $this->warn("Could not retrieve unique indexes for table {$table}: {$e->getMessage()}");
-            return [];
-        }
-    }
-
-    /**
      * Get models to process
      *
      * @param string|null $model
      */
-    private function getModels(string $model = null): void
+    private function getModels(?string $model = null): void
     {
-        $this->models = Mlang::getModels();
+        $this->models = MLang::getModels();
 
         if ($model && Str::lower($model) !== 'all') {
             $modelsPath = Config::get('mlang.default_models_path', 'App\\Models\\');
@@ -214,7 +155,7 @@ class MLangGenerateCommand extends Command
      *
      * @param string|null $locale
      */
-    private function getLanguages(string $locale = null): void
+    private function getLanguages(?string $locale = null): void
     {
         $this->languages = Config::get('mlang.languages', []);
 
