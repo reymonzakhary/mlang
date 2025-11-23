@@ -2,6 +2,7 @@
 
 namespace Upon\Mlang\Models\Traits;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Contracts\Database\Query\Expression;
@@ -113,23 +114,25 @@ trait MlangTrait
     /**
      * Find a model by its primary key.
      *
+     * @param Builder $builder
      * @param string|int $id
-     * @param null $iso
+     * @param string|null $iso
      * @return Model|null
      */
     public function scopeTrFind(
+        Builder $builder,
         string|int $id,
-                   $iso = null
+        string $iso = null
     ): Model|null
     {
         // Only use MLang columns if auto_generate is enabled
         if (config('mlang.auto_generate', false)) {
             $iso = $iso ?? app()->getLocale();
-            return $this->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
+            return $builder->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
         }
 
         // Use standard find otherwise
-        return $this->where('id', '=', $id)->first();
+        return $builder->where('id', '=', $id)->first();
     }
 
     /**
