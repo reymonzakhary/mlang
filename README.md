@@ -1,165 +1,195 @@
-# High-Performance Multi-Language Package for Laravel
+# MLang - The Performant Way to Handle Multilingual Laravel Models
+
+<p align="center">
+<strong>Stop using JSON columns. Start using proper database structure for translations.</strong>
+</p>
 
 <p align="center">
 <a href="https://packagist.org/packages/upon/mlang"><img src="https://img.shields.io/packagist/dt/upon/mlang" alt="Total Downloads"></a>
 <a href="https://packagist.org/packages/upon/mlang"><img src="https://img.shields.io/packagist/v/upon/mlang" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/upon/mlang"><img src="https://img.shields.io/packagist/l/upon/mlang" alt="License"></a>
 <a href="https://packagist.org/packages/upon/mlang"><img src="https://img.shields.io/packagist/php-v/upon/mlang" alt="PHP Version"></a>
-<a href="https://packagist.org/packages/upon/mlang"><img src="https://img.shields.io/packagist/stars/upon/mlang" alt="GitHub Stars"></a>
+<a href="https://github.com/reymonzakhary/mlang"><img src="https://img.shields.io/github/stars/reymonzakhary/mlang?style=social" alt="GitHub Stars"></a>
 </p>
 
-This package is a high-performance solution designed to provide efficient multi-language support for Laravel applications. It offers robust features and optimizations to ensure fast and reliable language management, making your application accessible to a global audience without sacrificing performance.
+<p align="center">
+<a href="#quick-start">Quick Start</a> •
+<a href="#why-mlang">Why MLang?</a> •
+<a href="#features">Features</a> •
+<a href="#documentation">Documentation</a> •
+<a href="#contributing">Contributing</a>
+</p>
 
-## Table of Contents
+---
+
+## Why Another Translation Package?
+
+Most Laravel translation packages store translations in **JSON columns**. This works, but has serious limitations:
+
+- **Can't query translations efficiently** - Want to search products by name in French? Good luck with JSON.
+- **No database indexing** - JSON columns can't be indexed properly, making searches slow.
+- **Complex migrations** - Adding a new translatable field means updating JSON structure.
+
+**MLang takes a different approach:** Each translation is a proper database row with `row_id` (linking translations together) and `iso` (language code). This means:
+
+```php
+// Find all products with "laptop" in the name - in ANY language
+Product::where('name', 'like', '%laptop%')->get();
+
+// Works with standard Laravel queries, indexes, and full-text search!
+```
+
+## Quick Start
+
+```bash
+composer require upon/mlang
+php artisan vendor:publish --tag="mlang"
+php artisan mlang:migrate
+```
+
+```php
+// Add to your model
+use Upon\Mlang\Contracts\MlangContractInterface;
+use Upon\Mlang\Models\Traits\MlangTrait;
+
+class Product extends Model implements MlangContractInterface
+{
+    use MlangTrait;
+}
+
+// Create product in multiple languages at once
+MLang::forModel(Product::class)->createMultiLanguage(
+    attributes: ['price' => 99.99],
+    languages: ['en', 'fr', 'de'],
+    translatedAttributes: [
+        'en' => ['name' => 'Laptop', 'description' => 'Powerful laptop'],
+        'fr' => ['name' => 'Ordinateur', 'description' => 'Ordinateur puissant'],
+        'de' => ['name' => 'Laptop', 'description' => 'Leistungsstarker Laptop'],
+    ]
+);
+
+// Query in current language - automatically filtered!
+$products = Product::trWhere('status', 'active')->get();
+```
+
+## Why MLang?
+
+| Feature | MLang | JSON-based packages |
+|---------|-------|---------------------|
+| **Database queries on translations** | Native SQL queries | Requires JSON functions |
+| **Index support** | Full index support | Limited/None |
+| **Full-text search** | Native support | Complex workarounds |
+| **Bulk operations** | Built-in methods | Manual implementation |
+| **Translation statistics** | `getStats()`, `getCoverage()` | Not available |
+| **Multi-language insert** | Single method call | Multiple inserts |
+| **Rate limiting** | Built-in protection | Not available |
+| **Security helpers** | Input validation & sanitization | Varies |
+
+### When to Use MLang
+
+**Choose MLang if you need:**
+- Search/filter by translated fields (e-commerce, CMS, catalogs)
+- Database-level performance for translations
+- Translation coverage analytics
+- Bulk translation operations
+
+**Stick with JSON-based packages if:**
+- You only display translations (no querying)
+- You have very few translatable models
+- You prefer simpler table structure
+
+## Documentation
 
 - [Version Compatibility](#version-compatibility)
+- [Installation](#installation)
 - [Features](#features)
 - [Database Structure](#database-structure)
-- [Requirements](#requirements)
-- [Installation](#installation)
 - [Artisan Commands](#artisan-commands)
 - [Using the Facade](#using-the-facade)
-  - [Core Facade Methods](#core-facade-methods)
-  - [Migration & Generation Methods](#migration--generation-methods)
-  - [Multi-Language Operations](#-multi-language-operations)
-  - [Translation Statistics & Analysis](#-translation-statistics--analysis)
-- [Configuration Options](#configuration-options)
 - [Query Usage](#query-usage)
-- [Helper Classes](#-helper-classes)
-  - [SecurityHelper](#securityhelper-methods)
-  - [LanguageHelper](#languagehelper-methods)
-  - [TranslationHelper](#translationhelper-methods)
-  - [QueryHelper](#queryhelper-methods)
+- [Helper Classes](#helper-classes)
+- [Configuration Options](#configuration-options)
 - [Security Best Practices](#security-best-practices)
 - [Contributing](#contributing)
 - [License](#license)
-- [Credits](#credits)
-- [Contact & Support](#contact--support)
-
-## Version Compatibility
-
-This package follows Laravel's major versioning for compatibility.
-
-| Package Version | Supported Laravel Versions | PHP Requirements | Architecture                            |
-|-----------------|-----------------------------|------------------|----------------------------------------|
-| `^1.0`          | Laravel 10.x                | PHP >= 8.1       | Model inheritance approach             |
-| `^2.0`          | Laravel 11.x, 12.x          | PHP >= 8.3       | Trait and interface approach           |
-
-> **Note:** If you are using Laravel 11 or 12, please use version `^2.0` of this package.  
-> For Laravel 10, continue using version `^1.0`.
->
-> The architecture has changed between versions - v1 uses model inheritance while v2 uses traits and interfaces.
 
 ## Features
 
-* **Accelerated translation retrieval**: Translation strings are efficiently retrieved from the same database table, minimizing database join queries and improving response times.
-* **Seamless integration with Laravel**: The package integrates seamlessly with Laravel, leveraging its existing localization infrastructure while providing performance enhancements.
-* **Translation helpers**: Helper functions and methods to translate your application's content into different languages.
-* **Language detection**: Automatic language detection based on user's browser settings or manual language selection.
-* **Language fallbacks**: Fallback support for missing translations to ensure users always see content in a supported language.
-* **Smart database structure**: Custom columns for efficient language identification and relation management.
-* **Robust error handling**: Intelligent error prevention when columns don't exist or when database operations aren't ready.
-* **Safe factory integration**: Designed to work safely with factories even before migrations run.
-* **Smooth console integration**: Terminal-friendly command output directly in your console.
-* **Flexible architecture**:
-    * Version 1: Model inheritance approach for simplicity
-    * Version 2: Trait-based approach for more flexibility and compatibility with existing inheritance hierarchies
-* **Facade Support**: Fluent facade interface for accessing MLang functionality directly
-* **🆕 Multi-Language Insert**: Create records in multiple languages simultaneously with a single method call
-* **🆕 Security Enhancements**: Built-in input validation, SQL injection prevention, and sanitization
-* **🆕 Helper Classes**: Organized helper classes for security, language operations, translations, and queries
-* **🆕 Translation Statistics**: Get insights into translation coverage and incomplete translations
-* **🆕 Bulk Operations**: Update or delete all translations for a record at once
-* **🆕 Rate Limiting**: Protection against abuse with built-in rate limiting for bulk operations
+### Core Features
+| Feature | Description |
+|---------|-------------|
+| **Row-based translations** | Each translation is a database row - queryable, indexable, searchable |
+| **Auto language scoping** | Queries automatically filter by current locale |
+| **Route model binding** | Works seamlessly with Laravel's route model binding |
+| **Fallback support** | Automatic fallback to default language when translation missing |
+| **Browser detection** | Middleware to detect user's preferred language |
 
-## Database Structure
+### Developer Experience
+| Feature | Description |
+|---------|-------------|
+| **One-line multi-language insert** | `createMultiLanguage()` creates all translations at once |
+| **Bulk operations** | Update/delete all translations for a record in one call |
+| **Translation statistics** | `getStats()` and `getCoverage()` for analytics |
+| **Artisan commands** | `mlang:migrate`, `mlang:generate` for easy management |
+| **Facade API** | Fluent interface: `MLang::forModel(Product::class)->...` |
 
-This package adds two essential columns to the models you specify:
-
-* **row_id**: This column serves as the primary relation key across all languages, linking translations together.
-* **iso**: This column holds the language code (e.g., en, fr, nl), identifying which language each record represents.
-
-## Requirements
-
-* PHP >= 8.1 for version 1.x
-* PHP >= 8.3 for version 2.x
-* Laravel >= 10.0
-
-**This package requires the following dependency:**
-```bash
-composer require doctrine/dbal
-```
+### Security & Performance
+| Feature | Description |
+|---------|-------------|
+| **Input validation** | Built-in validation for locales, table names, model classes |
+| **SQL injection prevention** | All queries use Laravel Query Builder |
+| **Rate limiting** | Built-in protection for bulk operations |
+| **Safe with factories** | Works before migrations run |
 
 ## Installation
 
-1. Install the package using Composer:
+### Requirements
+
+| PHP | Laravel |
+|-----|---------|
+| >= 8.1 | 10.x, 11.x, 12.x |
+
+### Step 1: Install
+
 ```bash
 composer require upon/mlang
-```
-
-2. Publish the package configuration and language files:
-```bash
+composer require doctrine/dbal  # Required dependency
 php artisan vendor:publish --tag="mlang"
 ```
 
-3. Configure the package by modifying the `config/mlang.php` file according to your requirements. You can specify:
-    - Supported locales
-    - Default locale
-    - Translatable models
-    - Auto-generation settings
-    - Auto-migration hooks
-    - Observer behavior
-
-4. Configure your models in the mlang config file:
+### Step 2: Configure Models
 
 ```php
 // config/mlang.php
 'models' => [
     \App\Models\Category::class,
     \App\Models\Product::class,
-    // Add all translatable models
 ]
 ```
 
-5. Use MLang in your models:
-
-**For Version 1.x:**
-Extend your models with `MlangModel` instead of the default Eloquent Model:
+### Step 3: Add Trait to Models
 
 ```php
-<?php
-// ...
-use Upon\Mlang\Models\MlangModel;
-
-class Category extends MlangModel
-{
-    // ...
-}
-```
-
-**For Version 2.x:**
-Use the trait and implement the interface instead of extending the model:
-
-```php
-<?php
-// ...
-use Illuminate\Database\Eloquent\Model;
 use Upon\Mlang\Contracts\MlangContractInterface;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
-class Category extends Model implements MlangContractInterface
+class Product extends Model implements MlangContractInterface
 {
     use MlangTrait;
-    
-    // ...
 }
 ```
 
-6. Run the migration command to add the required columns to your models:
+> **Alternative:** You can also extend `Upon\Mlang\Models\MlangModel` if you prefer inheritance over traits.
+
+### Step 4: Run Migration
 
 ```bash
 php artisan mlang:migrate
 ```
+
+This adds two columns to your tables:
+- `row_id` - Links translations together (same row_id = same content in different languages)
+- `iso` - Language code (en, fr, de, etc.)
 
 ## Artisan Commands
 
@@ -411,8 +441,8 @@ To ensure smooth operation with factories:
 2. The trait will automatically detect missing columns and adjust behavior accordingly.
 3. After running migrations, you can enable auto-generation features.
 
-**Version 2.x additional benefits:**
-The trait-based approach in version 2 makes it even easier to work with factories before migrations, as it has enhanced column existence detection and more graceful fallbacks.
+**Trait-based approach benefits:**
+The trait-based approach makes it easy to work with factories before migrations, with enhanced column existence detection and graceful fallbacks.
 
 ## Managing Translations
 
@@ -542,7 +572,7 @@ Route::get('/categories/{category}', function (Category $category) {
 
 ## Understanding Interface and Trait Relationship
 
-When implementing MLang v2.x in your models, it's important to understand the relationship between the interface and trait:
+When implementing MLang in your models, it's important to understand the relationship between the interface and trait:
 
 1. **The Interface (`MlangContractInterface`)** defines the contract that your models must fulfill to be MLang-compatible.
 
@@ -769,33 +799,33 @@ MLang::forModel(Product::class)->createMultiLanguage($attributes);
 
 ## Contributing
 
-Contributions are welcome! If you encounter any issues, have suggestions, or want to contribute to the package, please create an issue or submit a pull request on the package's GitHub repository.
+Contributions are welcome! Here's how you can help:
+
+1. **Star the repo** - It helps others discover MLang
+2. **Report bugs** - Open an issue with reproduction steps
+3. **Suggest features** - We'd love to hear your ideas
+4. **Submit PRs** - Bug fixes and improvements welcome
+
+## Support the Project
+
+If MLang helps you build multilingual Laravel apps, please consider:
+
+- Giving it a star on GitHub
+- Sharing it with other Laravel developers
+- Writing about your experience using it
 
 ## License
 
-This package is open-source software licensed under the MIT license. Feel free to use, modify, and distribute it as per the terms of the license.
+MIT License - see [LICENSE](LICENSE) for details.
 
-## Credits
+---
 
-This package was developed by **Reymon Zakhary** at **Charisma Design**.
+<p align="center">
+Built with care by <a href="https://charisma-design.eu">Charisma Design</a>
+</p>
 
-Special thanks to the Laravel community for their support and inspiration.
-
-### About Charisma Design
-
-Charisma Design is a leading software development company specializing in enterprise solutions and innovative web applications.
-
-- 🌐 Website: [https://chd.com.eg](https://chd.com.eg)
-- 🌐 Europe: [https://charisma-design.eu](https://charisma-design.eu)
-- 📧 Email: [reymon@charisma-design.eu](mailto:reymon@charisma-design.eu)
-
-## Contact & Support
-
-If you have any questions, need further assistance, or want to discuss enterprise solutions:
-
-- **Email**: [reymon@charisma-design.eu](mailto:reymon@charisma-design.eu)
-- **Website**: [https://chd.com.eg](https://chd.com.eg)
-- **Europe**: [https://charisma-design.eu](https://charisma-design.eu)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/reymonzakhary/pro_mlang/issues)
-
-For enterprise support, custom development, or consulting services, please contact us through our website.
+<p align="center">
+<a href="https://github.com/reymonzakhary/mlang/issues">Report Bug</a> •
+<a href="https://github.com/reymonzakhary/mlang/issues">Request Feature</a> •
+<a href="mailto:reymon@charisma-design.eu">Contact</a>
+</p>
