@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Contracts\Database\Query\Expression;
 use Upon\Mlang\Events\TranslationMissing;
 use Upon\Mlang\Helpers\LanguageHelper;
+use Upon\Mlang\Helpers\RowIdHelper;
 use Upon\Mlang\Models\Concerns\HasTranslations;
 use Upon\Mlang\Observers\MlangObserver;
 
@@ -84,7 +85,9 @@ trait MlangTrait
     {
         // Only use MLang columns if auto_generate is enabled
         if (config('mlang.auto_generate', false)) {
-            return $this->where([[$this->column, $value], ['iso', app()->getLocale()]])->first() ??
+            $column = $this->column === 'row_id' ? RowIdHelper::lookupColumn($this->getTable(), $value) : $this->column;
+
+            return $this->where([[$column, $value], ['iso', app()->getLocale()]])->first() ??
                 abort(404, __("Not Found -- There is no {$this->getModelName()} found"));
         }
 
@@ -147,7 +150,8 @@ trait MlangTrait
         $iso = $iso ?? app()->getLocale();
         $fallback = $fallback ?? (bool) config('mlang.fallback_on_query', false);
 
-        $found = (clone $query)->where('row_id', '=', $id)->where('iso', '=', $iso)->first();
+        $column = RowIdHelper::lookupColumn((new static)->getTable(), $id);
+        $found = (clone $query)->where($column, '=', $id)->where('iso', '=', $iso)->first();
 
         if ($found || !$fallback) {
             return $found;
@@ -155,9 +159,32 @@ trait MlangTrait
 
         TranslationMissing::dispatch(static::class, $id, $iso);
 
-        return $query->where('row_id', '=', $id)
+        return $query->where($column, '=', $id)
             ->where('iso', '=', LanguageHelper::getFallbackLanguage())
             ->first();
+    }
+
+    /**
+     * Builder-friendly counterpart of trFind(): constrain a query to one record
+     * (by row_id, or legacy_row_id for integer values after a conversion) in a locale.
+     *
+     *   Product::whereRow(1)->first();
+     *   Product::query()->whereRow($id, 'fr')->with('translations')->first();
+     *
+     * @param Builder     $builder
+     * @param string|int  $id
+     * @param string|null $iso
+     * @return Builder
+     */
+    public function scopeWhereRow(Builder $builder, string|int $id, ?string $iso = null): Builder
+    {
+        if (!config('mlang.auto_generate', false)) {
+            return $builder->where($builder->qualifyColumn('id'), $id);
+        }
+
+        return $builder
+            ->where($builder->qualifyColumn(RowIdHelper::lookupColumn($this->getTable(), $id)), $id)
+            ->where($builder->qualifyColumn('iso'), $iso ?? app()->getLocale());
     }
 
     /**

@@ -199,7 +199,7 @@ The package provides several Artisan commands for managing translations:
 
 | Command | Arguments | Options | Description |
 |---------|-----------|---------|-------------|
-| `mlang:migrate` | - | `--table=TABLE_NAME`<br>`--rollback` | Add MLang columns to tables<br>Use `--rollback` to remove columns |
+| `mlang:migrate` | - | `--table=TABLE_NAME`<br>`--rollback`<br>`--convert-row-id` 🆕 | Add MLang columns and the `(row_id, iso)` unique index<br>`--rollback` removes them; `--convert-row-id` switches integer row ids to ulid/uuid (see [UPGRADE.md](UPGRADE.md)) |
 | `mlang:generate` | `{model?}`<br>`{locale?}` | - | Generate translations for models<br>Optionally specify model name and locale |
 | `mlang:doctor` 🆕 | - | `--fix`<br>`--json` | Check models, columns and data (orphans, unknown locales, duplicates, coverage). Exit code 1 on problems |
 | `mlang:translate` 🆕 | `{model?}` | `--to=fr,de`<br>`--from=en` | Create missing locale rows through the configured translator driver |
@@ -429,6 +429,12 @@ The package offers various configuration options to fine-tune its behavior:
 // Control observer behavior during console operations
 'observe_during_console' => false,
 
+// How the shared entity id is produced: 'id' | 'ulid' | 'uuid' (v3.1)
+'row_id_type' => 'id',
+
+// Add a (row_id, iso) unique index during mlang:migrate (v3.1)
+'unique_row_locale' => true,
+
 // Serve the fallback_language row when the current locale has no row (v3)
 'fallback_on_query' => false,
 
@@ -436,7 +442,7 @@ The package offers various configuration options to fine-tune its behavior:
 'sync_shared_attributes' => true,
 
 // Locale sources for DetectUserLanguageMiddleware, in priority order (v3)
-'detect_locale_from' => ['route', 'segment', 'query', 'session', 'header'],
+'detect_locale_from' => ['route', 'query', 'session', 'header'], // add 'segment' for /fr/... on plain routes
 'locale_query_key' => 'lang',
 
 // TranslatorInterface implementation used by mlang:translate (v3)
@@ -569,6 +575,7 @@ Both package versions provide the same query methods for working with multilingu
 |--------------|------------|-------------|---------|
 | `trFind()` | `int\|string $id, ?string $iso = null, ?bool $fallback = null` | Find record by row_id in current (or specified) language | `Category::trFind(1)` |
 | `trWhere()` | `array\|string\|Closure $conditions` | Query with auto language filter and id→row_id mapping | `Category::trWhere('status', 'active')` |
+| `whereRow()` 🆕 | `int\|string $id, ?string $iso = null` | Chainable form of `trFind()` (also resolves legacy integer ids) | `Category::whereRow(1)->with('translations')->first()` |
 | `inLocale()` | `?string $locale = null` | Only rows in the given locale | `Category::inLocale('fr')->get()` |
 | `withFallback()` | `?string $locale = null` | Rows in the locale, falling back to `fallback_language` where missing | `Category::withFallback()->get()` |
 | `withTranslations()` | – | Eager-load the `translations` relation | `Category::withTranslations()->get()` |
@@ -617,6 +624,19 @@ Route::get('/categories/{category}', function (Category $category) {
 - The `row_id` from the URL is used to find the record
 - The current application locale (`app()->getLocale()`) determines the language
 - Returns 404 if no translation exists in the current language
+
+## 🆕 Row ids: `id` vs `row_id` (v3.1)
+
+Every row has its own primary key `id` (the *translation* id) and shares a `row_id` (the *entity* id) with its sibling locales. Use `row_id` in URLs, events and anything another service stores.
+
+By default `row_id` is an integer copied from the first row's `id`. For distributed systems switch to generated ids:
+
+```php
+// config/mlang.php
+'row_id_type' => 'ulid',   // 'id' (default) | 'ulid' | 'uuid'
+```
+
+New installs get a ULID column straight away; existing tables are converted with `php artisan mlang:migrate --convert-row-id`, which keeps the old integers in `legacy_row_id` so `trFind(123)` and `/products/123` keep working. Full details in [UPGRADE.md](UPGRADE.md).
 
 ## 🆕 Translation Relations (v3)
 

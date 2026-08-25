@@ -12,7 +12,8 @@ use Upon\Mlang\Helpers\LanguageHelper;
 /**
  * Detects the request locale and applies it to the application.
  *
- * Sources are tried in the order given by `mlang.detect_locale_from`:
+ * Sources are tried in the order given by `mlang.detect_locale_from`
+ * (default: route, query, session, header; `segment` is opt-in):
  *   route   – a `{locale}` route parameter (see Route::localized())
  *   segment – the first URL segment (/fr/products)
  *   query   – ?lang=fr (parameter name from `mlang.locale_query_key`)
@@ -32,7 +33,13 @@ class DetectUserLanguageMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $this->detect($request) ?? LanguageHelper::getFallbackLanguage();
+        $supported = LanguageHelper::getConfiguredLanguages();
+        $current = App::getLocale();
+
+        // Nothing detected: keep a locale the app already set (e.g. from the
+        // user profile) as long as it is supported; otherwise use the fallback.
+        $locale = $this->detect($request)
+            ?? (in_array($current, $supported, true) ? $current : LanguageHelper::getFallbackLanguage());
 
         App::setLocale($locale);
         config(['app.locale' => $locale]);
@@ -53,7 +60,7 @@ class DetectUserLanguageMiddleware
     public function detect(Request $request): ?string
     {
         $supported = LanguageHelper::getConfiguredLanguages();
-        $sources = Config::get('mlang.detect_locale_from', ['route', 'segment', 'query', 'session', 'header']);
+        $sources = Config::get('mlang.detect_locale_from', ['route', 'query', 'session', 'header']);
 
         foreach ($sources as $source) {
             $candidate = match ($source) {

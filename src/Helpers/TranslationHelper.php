@@ -3,6 +3,7 @@
 namespace Upon\Mlang\Helpers;
 
 use Upon\Mlang\Events\TranslationCreated;
+use Upon\Mlang\Helpers\RowIdHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -196,6 +197,10 @@ class TranslationHelper
     private static function ensureBatchUniqueness(array $attributes, array $usedValues, string $language): array
     {
         foreach ($attributes as $key => $value) {
+            if (in_array($key, ['row_id', 'iso'], true)) {
+                continue; // shared by design
+            }
+
             if (is_string($value) && isset($usedValues[$key]) && in_array($value, $usedValues[$key])) {
                 // Value already used in this batch, make it unique
                 $attributes[$key] = $value . '-' . $language;
@@ -218,6 +223,10 @@ class TranslationHelper
 
         foreach ($uniqueIndexes as $index) {
             foreach ($index['columns'] as $column) {
+                if (in_array($column, ['row_id', 'iso'], true)) {
+                    continue;
+                }
+
                 if (isset($record[$column]) && is_string($record[$column])) {
                     $record[$column] = $record[$column] . '-' . \Illuminate\Support\Str::random(4);
                 }
@@ -233,12 +242,9 @@ class TranslationHelper
      * @param Model $model
      * @return int
      */
-    public static function generateRowId(Model $model): int
+    public static function generateRowId(Model $model): int|string
     {
-        $table = $model->getTable();
-        $maxRowId = DB::table($table)->max('row_id');
-
-        return ($maxRowId ?? 0) + 1;
+        return RowIdHelper::generate($model);
     }
 
     /**

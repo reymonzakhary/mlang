@@ -35,6 +35,9 @@ class MlangObserver
             if (empty($model->iso)) {
                 $model->iso = App::getLocale();
             }
+
+            // ulid/uuid row ids are generated before insert
+            $this->assignGeneratedRowId($model);
         } catch (\Throwable $e) {
             $this->logError('Error in MlangObserver@creating', $e, $model);
         }

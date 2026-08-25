@@ -72,7 +72,7 @@ class MLangGenerateCommand extends Command
             $namespace::query()->each(function ($record) use ($namespace, $model, &$count, $defaultLocale) {
                 // Ensure row_id exists
                 if (empty($record->row_id)) {
-                    $record->update(['row_id' => $record->id, 'iso' => $defaultLocale]);
+                    $record->update(['row_id' => \Upon\Mlang\Helpers\RowIdHelper::isGenerated() ? \Upon\Mlang\Helpers\RowIdHelper::generate($record) : $record->id, 'iso' => $defaultLocale]);
                 }
 
                 // Get existing translations

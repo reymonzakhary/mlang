@@ -62,6 +62,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Row id type
+    |--------------------------------------------------------------------------
+    |
+    | How the entity id shared by all translations of a record is produced.
+    |   'id'   – legacy: integer copied from the first row's primary key
+    |   'ulid' – generated before insert; globally unique, safe to publish
+    |            to other services, sortable
+    |   'uuid' – generated before insert; UUID v4
+    |
+    | Existing installations: keep 'id', or switch to ulid/uuid and run
+    | `php artisan mlang:migrate --convert-row-id` (see UPGRADE.md).
+    |
+    */
+    'row_id_type' => env('MLANG_ROW_ID_TYPE', 'id'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Unique (row_id, iso)
+    |--------------------------------------------------------------------------
+    |
+    | Add a unique index so a record can only have one row per locale.
+    | mlang:migrate skips the index (with a warning) while duplicates exist.
+    |
+    */
+    'unique_row_locale' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Observer in console
     |--------------------------------------------------------------------------
     |
@@ -101,11 +129,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Sources checked, in order, by DetectUserLanguageMiddleware:
-    | route (a {locale} route parameter), segment (first URL segment),
-    | query (?lang=), session, header (Accept-Language).
+    | route (a {locale} route parameter), query (?lang=), session,
+    | header (Accept-Language). Add 'segment' to also read the first URL
+    | segment (/fr/products) for routes not registered via Route::localized().
     |
     */
-    'detect_locale_from' => ['route', 'segment', 'query', 'session', 'header'],
+    'detect_locale_from' => ['route', 'query', 'session', 'header'],
     'locale_query_key' => 'lang',
 
     /*

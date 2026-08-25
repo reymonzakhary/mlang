@@ -6,7 +6,9 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Upon\Mlang\Contracts\MlangContractInterface;
+use Upon\Mlang\Columns\AddRowIdColumn;
 use Upon\Mlang\Helpers\LanguageHelper;
+use Upon\Mlang\Helpers\RowIdHelper;
 use Upon\Mlang\Models\Traits\MlangTrait;
 
 /**
@@ -110,12 +112,27 @@ class MLangDoctorCommand extends Command
             return ['table' => $table, 'problems' => $problems];
         }
 
+        $isInteger = AddRowIdColumn::isIntegerColumn($table, 'row_id');
+
+        if (RowIdHelper::isGenerated() && $isInteger) {
+            $problems[] = "row_id_type is '" . RowIdHelper::type() . "' but the column is still integer (run mlang:migrate --convert-row-id)";
+        } elseif (!RowIdHelper::isGenerated() && !$isInteger) {
+            $problems[] = "row_id column is " . Schema::getColumnType($table, 'row_id') . " but row_id_type is 'id' (set row_id_type to ulid/uuid)";
+        }
+
         $orphans = DB::table($table)->whereNull('row_id')->count();
         $fixed = 0;
 
         if ($orphans > 0 && $fix) {
-            $fixed = DB::table($table)->whereNull('row_id')->update(['row_id' => DB::raw('id')]);
+            $fixed = $isInteger
+                ? DB::table($table)->whereNull('row_id')->update(['row_id' => DB::raw('id')])
+                : $this->fixGeneratedOrphans($table);
             $orphans -= $fixed;
+        }
+
+        if (config('mlang.unique_row_locale', true)
+            && !in_array(AddRowIdColumn::UNIQUE_INDEX, array_column(Schema::getIndexes($table), 'name'), true)) {
+            $problems[] = "No (row_id, iso) unique index on '{$table}' (run mlang:migrate once duplicates are resolved)";
         }
 
         if ($orphans > 0) {
@@ -161,8 +178,31 @@ class MLangDoctorCommand extends Command
             'coverage' => $coverage,
             'locales' => $perLocale,
             'orphans_fixed' => $fixed,
+            'legacy_rows' => RowIdHelper::tableHasLegacyColumn($table)
+                ? DB::table($table)->whereNotNull(RowIdHelper::LEGACY_COLUMN)->count()
+                : 0,
             'problems' => $problems,
         ];
+    }
+
+    /**
+     * Give each orphan row its own generated row_id.
+     *
+     * @param string $table
+     * @return int
+     */
+    protected function fixGeneratedOrphans(string $table): int
+    {
+        $fixed = 0;
+
+        foreach (DB::table($table)->whereNull('row_id')->pluck('id') as $id) {
+            DB::table($table)->where('id', $id)->update([
+                'row_id' => RowIdHelper::type() === RowIdHelper::TYPE_UUID ? (string) \Illuminate\Support\Str::uuid() : (string) \Illuminate\Support\Str::ulid(),
+            ]);
+            $fixed++;
+        }
+
+        return $fixed;
     }
 
     /**

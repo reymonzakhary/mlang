@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0] - Unreleased
+
+### Added
+- **`row_id_type` config** (`id` | `ulid` | `uuid`). With `ulid`/`uuid` the entity id is generated before insert, is globally unique and safe to hand to other services. Default stays `id`.
+- **`mlang:migrate --convert-row-id`**: converts integer row ids to the configured type, keeping the integers in `legacy_row_id` so existing URLs and stored references keep resolving (`trFind()`, `whereRow()`, route binding).
+- **`(row_id, iso)` unique index** added by `mlang:migrate` when no duplicates exist (`unique_row_locale` config to disable). The command warns instead of failing while duplicates are present.
+- **`whereRow($id, $iso)` builder scope** — the chainable counterpart of `trFind()`.
+- `RowIdHelper` (type, generation, legacy lookup) and `UPGRADE.md`.
+- `mlang:doctor` now checks the row_id column type against `row_id_type`, verifies the unique index, reports legacy rows, and `--fix` assigns generated ids to orphans.
+
+### Changed
+- `DetectUserLanguageMiddleware` keeps a supported locale the application already set when nothing is detected (previously forced the fallback). Reading the first URL segment is now opt-in (`'segment'` in `detect_locale_from`).
+- `createMultiLanguage()` no longer suffixes `row_id`/`iso` when de-duplicating string values.
+
 ## [3.0.0] - Unreleased
 
 ### Added

@@ -5,6 +5,7 @@ namespace Upon\Mlang\Console;
 use Illuminate\Console\Command;
 use Upon\Mlang\Columns\AddRowIdColumn;
 use Upon\Mlang\Facades\MLang;
+use Upon\Mlang\Helpers\RowIdHelper;
 
 class MLangMigrateCommand extends Command
 {
@@ -15,7 +16,8 @@ class MLangMigrateCommand extends Command
      */
     protected $signature = 'mlang:migrate
                             {--rollback : Roll back MLang columns}
-                            {--table= : Specific table to migrate or rollback}';
+                            {--table= : Specific table to migrate or rollback}
+                            {--convert-row-id : Convert integer row_id columns to the configured ulid/uuid type (keeps legacy_row_id)}';
 
     /**
      * The console command description.
@@ -31,6 +33,11 @@ class MLangMigrateCommand extends Command
     {
         $isRollback = $this->option('rollback');
         $specificTable = $this->option('table');
+
+        if ($this->option('convert-row-id')) {
+            return $this->convertRowIds($specificTable);
+        }
+
         $this->prepare($isRollback, $specificTable);
         return 0;
     }
@@ -83,6 +90,36 @@ class MLangMigrateCommand extends Command
     }
 
     /**
+     * Convert integer row_id columns to the configured ulid/uuid type.
+     *
+     * @param string|null $specificTable
+     * @return int
+     */
+    protected function convertRowIds(?string $specificTable): int
+    {
+        if (!RowIdHelper::isGenerated()) {
+            $this->error("Set 'row_id_type' to 'ulid' or 'uuid' in config/mlang.php before converting.");
+            return self::FAILURE;
+        }
+
+        $tables = $specificTable ? [$specificTable] : MLang::getTableNames();
+
+        foreach ($tables as $table) {
+            try {
+                $groups = AddRowIdColumn::convert($table);
+                $this->info($groups > 0
+                    ? "{$table}: converted {$groups} record groups to " . RowIdHelper::type() . " row ids (integers kept in legacy_row_id)."
+                    : "{$table}: already converted.");
+            } catch (\Throwable $e) {
+                $this->error("{$table}: {$e->getMessage()}");
+                return self::FAILURE;
+            }
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
      * Add MLang columns to models
      *
      * @param $models
@@ -99,6 +136,10 @@ class MLangMigrateCommand extends Command
                 try {
                     AddRowIdColumn::up($table, "\\".$models[$k]);
                     $this->info("Columns have been added to {$table} table.");
+
+                    if (config('mlang.unique_row_locale', true) && ($dupes = AddRowIdColumn::duplicateCount($table)) > 0) {
+                        $this->warn("  Skipped the (row_id, iso) unique index on {$table}: {$dupes} duplicate pairs exist. Clean them up (see mlang:doctor) and re-run mlang:migrate.");
+                    }
                     $count++;
                 } catch (\Exception $e) {
                     $this->error("Failed to add columns to {$table}: " . $e->getMessage());

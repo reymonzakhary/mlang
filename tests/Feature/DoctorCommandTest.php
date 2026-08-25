@@ -35,6 +35,7 @@ class DoctorCommandTest extends TestCase
 
     public function test_detects_orphans_unknown_iso_duplicates_and_fixes_orphans(): void
     {
+        config()->set('mlang.unique_row_locale', false); // allow duplicates to exist
         Artisan::call('mlang:migrate');
         DB::table('products')->insert([
             ['name' => 'orphan', 'iso' => 'en', 'row_id' => null],
