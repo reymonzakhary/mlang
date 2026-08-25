@@ -73,6 +73,55 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fallback on query
+    |--------------------------------------------------------------------------
+    |
+    | When true, trWhere() / trFind() return the fallback_language row for
+    | records that have no row in the current locale instead of returning
+    | nothing. You can always opt in per query with Model::withFallback().
+    |
+    */
+    'fallback_on_query' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sync shared attributes
+    |--------------------------------------------------------------------------
+    |
+    | Models that declare `protected array $translatable = [...]` treat every
+    | other column as shared. When a shared column changes on one translation
+    | row, the change is propagated to the sibling rows automatically.
+    |
+    */
+    'sync_shared_attributes' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Locale detection
+    |--------------------------------------------------------------------------
+    |
+    | Sources checked, in order, by DetectUserLanguageMiddleware:
+    | route (a {locale} route parameter), segment (first URL segment),
+    | query (?lang=), session, header (Accept-Language).
+    |
+    */
+    'detect_locale_from' => ['route', 'segment', 'query', 'session', 'header'],
+    'locale_query_key' => 'lang',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Translator driver
+    |--------------------------------------------------------------------------
+    |
+    | Class implementing Upon\Mlang\Contracts\TranslatorInterface, used by
+    | `mlang:translate` and MLang::translateMissing() to fill missing locale
+    | rows. The default NullTranslator copies the source text unchanged.
+    |
+    */
+    'translator' => \Upon\Mlang\Translators\NullTranslator::class,
+
+    /*
+    |--------------------------------------------------------------------------
     | Migration Integration
     |--------------------------------------------------------------------------
     |

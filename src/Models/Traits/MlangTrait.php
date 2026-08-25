@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Contracts\Database\Query\Expression;
+use Upon\Mlang\Events\TranslationMissing;
+use Upon\Mlang\Helpers\LanguageHelper;
+use Upon\Mlang\Models\Concerns\HasTranslations;
 use Upon\Mlang\Observers\MlangObserver;
 
 trait MlangTrait
 {
+    use HasTranslations;
+
     /**
      * The column is the key what used for route middle binding.
      * You can change it to the default id or other column.
@@ -40,8 +45,10 @@ trait MlangTrait
     {
         $this->hasUlid();
 
-        // Only add MLang columns to fillable if auto_generate is enabled
-        if (config('mlang.auto_generate', false)) {
+        // Make the MLang columns mass-assignable when auto_generate is enabled.
+        // A fully unguarded model ($guarded = []) is left untouched: setting
+        // $fillable on it would restrict mass assignment to iso/row_id only.
+        if (config('mlang.auto_generate', false) && !($this->fillable === [] && $this->guarded === [])) {
             $this->fillable = array_merge($this->fillable, $this->fill);
         }
 
@@ -89,50 +96,68 @@ trait MlangTrait
     /**
      * Get a model with where query
      *
+     * @param Builder $builder
      * @param array|string|\Closure|Expression $attributes
-     * @return static
+     * @param mixed ...$args
+     * @return Builder
      */
     public function scopeTrWhere(
-        array|string|\Closure|Expression $attributes = []
-    ): static
+        Builder $builder,
+        array|string|\Closure|Expression $attributes = [],
+        mixed ...$args
+    ): Builder
     {
-        $func_get_args = func_get_args();
+        $wheres = [$attributes, ...$args];
 
         // Only apply MLang-specific logic if auto_generate is enabled
         if (config('mlang.auto_generate', false)) {
-            array_walk_recursive($func_get_args, static fn(&$v) => $v !== 'id'?:$v = 'row_id');
-            $this->query->where(...$func_get_args)
-                ->where('iso', app()->getLocale());
-        } else {
-            // Use standard query otherwise
-            $this->query->where(...$func_get_args);
+            array_walk_recursive($wheres, static fn(&$v) => $v !== 'id' ?: $v = 'row_id');
+
+            $builder->where(...$wheres);
+
+            return config('mlang.fallback_on_query', false)
+                ? $this->scopeWithFallback($builder)
+                : $this->scopeInLocale($builder);
         }
 
-        return $this;
+        return $builder->where(...$wheres);
     }
 
     /**
-     * Find a model by its primary key.
+     * Find a record by its row_id in the given (or current) locale.
      *
-     * @param Builder $builder
-     * @param string|int $id
+     * Implemented as a static method rather than a scope because Eloquent's
+     * callScope() replaces a null scope result with the Builder, which made the
+     * old scope version impossible to null-check.
+     *
+     * @param string|int  $id
      * @param string|null $iso
-     * @return Model|null
+     * @param bool|null   $fallback Override mlang.fallback_on_query for this call.
+     * @return static|null
      */
-    public function scopeTrFind(
-        Builder $builder,
-        string|int $id,
-        string $iso = null
-    ): Model|null
+    public static function trFind(string|int $id, ?string $iso = null, ?bool $fallback = null): ?static
     {
+        $query = static::query();
+
         // Only use MLang columns if auto_generate is enabled
-        if (config('mlang.auto_generate', false)) {
-            $iso = $iso ?? app()->getLocale();
-            return $builder->where('iso', '=', $iso)->where("row_id", '=', $id)->first();
+        if (!config('mlang.auto_generate', false)) {
+            return $query->where('id', '=', $id)->first();
         }
 
-        // Use standard find otherwise
-        return $builder->where('id', '=', $id)->first();
+        $iso = $iso ?? app()->getLocale();
+        $fallback = $fallback ?? (bool) config('mlang.fallback_on_query', false);
+
+        $found = (clone $query)->where('row_id', '=', $id)->where('iso', '=', $iso)->first();
+
+        if ($found || !$fallback) {
+            return $found;
+        }
+
+        TranslationMissing::dispatch(static::class, $id, $iso);
+
+        return $query->where('row_id', '=', $id)
+            ->where('iso', '=', LanguageHelper::getFallbackLanguage())
+            ->first();
     }
 
     /**
@@ -145,14 +170,25 @@ trait MlangTrait
     }
 
     /**
-     * Boot the trait - OBSERVER DISABLED TO PREVENT MEMORY ISSUES
+     * Boot the trait and register the MLang observer.
+     *
+     * The observer is registered event-by-event instead of via static::observe(),
+     * because observe() instantiates the model (`new static`) while it is still
+     * booting, which Laravel 13 rejects with a LogicException.
      */
-    public static function bootMlangTrait()
+    public static function bootMlangTrait(): void
     {
-        if(config('mlang.auto_generate', false)){
-            static::observe(MlangObserver::class);
+        if (!config('mlang.auto_generate', false)) {
+            return;
         }
-        // Observer completely disabled to prevent memory issues
+
+        $observer = app(MlangObserver::class);
+
+        foreach (['creating', 'created', 'updating', 'updated', 'deleting', 'deleted', 'saving', 'saved'] as $event) {
+            if (method_exists($observer, $event)) {
+                static::registerModelEvent($event, [$observer, $event]);
+            }
+        }
     }
 
     /**

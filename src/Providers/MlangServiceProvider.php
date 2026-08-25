@@ -83,7 +83,31 @@ class MlangServiceProvider extends ServiceProvider
         $this->commands([
             \Upon\Mlang\Console\MLangMigrateCommand::class,
             \Upon\Mlang\Console\MLangGenerateCommand::class,
+            \Upon\Mlang\Console\MLangDoctorCommand::class,
+            \Upon\Mlang\Console\MLangTranslateCommand::class,
         ]);
+    }
+
+    /**
+     * Register Route::localized($callback): wraps routes in a /{locale} prefix
+     * constrained to the configured languages, with the detection middleware.
+     *
+     * @return void
+     */
+    protected function registerRouteMacro(): void
+    {
+        if (!class_exists(\Illuminate\Support\Facades\Route::class) || \Illuminate\Support\Facades\Route::hasMacro('localized')) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Route::macro('localized', function (\Closure $routes, array $options = []) {
+            $languages = config('mlang.languages', ['en']);
+
+            return \Illuminate\Support\Facades\Route::prefix('{locale}')
+                ->where(['locale' => implode('|', array_map('preg_quote', $languages))])
+                ->middleware(array_merge([\Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class], $options['middleware'] ?? []))
+                ->group($routes);
+        });
     }
 
     /**
@@ -96,6 +120,13 @@ class MlangServiceProvider extends ServiceProvider
         $this->app->bind('mlang', function ($app) {
             return new MLang($app);
         });
+
+        // Translator driver: resolve whatever class mlang.translator names.
+        $this->app->bind(\Upon\Mlang\Contracts\TranslatorInterface::class, function ($app) {
+            return $app->make(config('mlang.translator', \Upon\Mlang\Translators\NullTranslator::class));
+        });
+
+        $this->registerRouteMacro();
         // Register the facade
         $this->registerFacade();
 //        $this->app->alias('Mlang', '\Upon\Mlang\Facades\MlangFacade::class');

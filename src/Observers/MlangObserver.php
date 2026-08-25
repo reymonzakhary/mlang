@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Upon\Mlang\Events\SharedAttributesSynced;
+use Upon\Mlang\Events\TranslationCreated;
 use Upon\Mlang\Traits\MLangColumnCheckTrait;
 use Upon\Mlang\Traits\UpdateRowIdTrait;
 
@@ -55,6 +57,10 @@ class MlangObserver
 
             // Update row_id for new model
             $this->updateRowId($model);
+
+            if ($model->iso) {
+                TranslationCreated::dispatch($model, (string) $model->iso);
+            }
         } catch (\Throwable $e) {
             $this->logError('Error in MlangObserver@created', $e, $model);
         }
@@ -62,14 +68,45 @@ class MlangObserver
 
     /**
      * Handle the Model "updated" event.
-     * This can be used for custom logic when a model is updated
+     * Propagates changed shared (non-translatable) attributes to sibling translation rows.
      *
      * @param Model $model
      * @return void
      */
     public function updated(Model $model): void
     {
-        // You can add custom logic here if needed
+        try {
+            if (!Config::get('mlang.sync_shared_attributes', true) || !$this->shouldProcess()) {
+                return;
+            }
+
+            if (!method_exists($model, 'getSharedAttributes') || empty($model->getTranslatableAttributes())) {
+                return;
+            }
+
+            if (empty($model->row_id) || !$this->hasRequiredColumns($model)) {
+                return;
+            }
+
+            $changes = array_intersect_key($model->getChanges(), array_flip($model->getSharedAttributes()));
+
+            if (empty($changes)) {
+                return;
+            }
+
+            $keyName = $model->getKeyName();
+
+            $affected = $model->newQueryWithoutScopes()
+                ->where('row_id', $model->row_id)
+                ->where($keyName, '!=', $model->getRawOriginal($keyName))
+                ->update($changes);
+
+            if ($affected > 0) {
+                SharedAttributesSynced::dispatch($model, $changes, $affected);
+            }
+        } catch (\Throwable $e) {
+            $this->logError('Error in MlangObserver@updated', $e, $model);
+        }
     }
 
     /**

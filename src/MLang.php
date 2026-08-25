@@ -2,6 +2,9 @@
 
 namespace Upon\Mlang;
 
+use Upon\Mlang\Console\MLangDoctorCommand;
+use Upon\Mlang\Contracts\TranslatorInterface;
+use Upon\Mlang\Helpers\AutoTranslateHelper;
 use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
@@ -464,5 +467,40 @@ class MLang implements MlangContractInterface
 
         $modelInstance = $this->getModelInstance();
         return QueryHelper::getTranslationCoverage($modelInstance);
+    }
+
+    /**
+     * Create every missing locale row for the current model using the
+     * configured (or given) translator driver.
+     *
+     * @param string[]|null            $targets    Locales to create (default: all configured)
+     * @param string|null              $from       Source locale (default: fallback_language)
+     * @param TranslatorInterface|null $translator Override the configured driver
+     * @return int Number of rows created
+     * @throws InvalidArgumentException
+     */
+    public function translateMissing(?array $targets = null, ?string $from = null, ?TranslatorInterface $translator = null): int
+    {
+        if ($this->currentModel === null) {
+            throw new InvalidArgumentException('No model set. Use forModel() first.');
+        }
+
+        return AutoTranslateHelper::fillMissing(
+            $this->getModelInstance(),
+            $translator ?? $this->app->make(TranslatorInterface::class),
+            $targets,
+            $from
+        );
+    }
+
+    /**
+     * Run the mlang:doctor checks and return the report array.
+     *
+     * @param bool $fix Repair orphan rows
+     * @return array
+     */
+    public function doctor(bool $fix = false): array
+    {
+        return $this->app->make(MLangDoctorCommand::class)->buildReport($fix);
     }
 }

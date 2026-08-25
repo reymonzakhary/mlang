@@ -2,6 +2,7 @@
 
 namespace Upon\Mlang\Helpers;
 
+use Upon\Mlang\Events\TranslationCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -172,6 +173,13 @@ class TranslationHelper
                     continue;
                 }
             }
+        }
+
+        foreach ($insertedRecords as $record) {
+            TranslationCreated::dispatch(
+                $model->newInstance()->setRawAttributes($record, true),
+                (string) $record['iso']
+            );
         }
 
         return $insertedRecords;

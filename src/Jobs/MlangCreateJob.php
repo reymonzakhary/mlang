@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Upon\Mlang\Events\TranslationCreated;
 
 class MlangCreateJob implements ShouldQueue
 {
@@ -92,7 +93,9 @@ class MlangCreateJob implements ShouldQueue
                         $this->handleUniqueFields($row, $uniqueIndexes);
 
                         // Create the translated record
-                        $modelClass::create($row);
+                        $created = $modelClass::create($row);
+
+                        TranslationCreated::dispatch($created, $language);
 
                         Log::info("MlangCreateJob: Created translation", [
                             'model' => $modelClass,

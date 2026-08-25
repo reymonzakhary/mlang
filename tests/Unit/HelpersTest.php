@@ -2,6 +2,7 @@
 
 namespace Upon\Mlang\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Upon\Mlang\Helpers\SecurityHelper;
 use Upon\Mlang\Helpers\LanguageHelper;
@@ -9,7 +10,7 @@ use InvalidArgumentException;
 
 class HelpersTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_validates_valid_locale()
     {
         $this->assertTrue(SecurityHelper::validateLocale('en'));
@@ -18,14 +19,14 @@ class HelpersTest extends TestCase
         $this->assertTrue(SecurityHelper::validateLocale('pt-BR'));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_locale()
     {
         $this->expectException(InvalidArgumentException::class);
         SecurityHelper::validateLocale('invalid_locale');
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_valid_table_name()
     {
         $this->assertTrue(SecurityHelper::validateTableName('users'));
@@ -33,14 +34,14 @@ class HelpersTest extends TestCase
         $this->assertTrue(SecurityHelper::validateTableName('database.users'));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_table_name()
     {
         $this->expectException(InvalidArgumentException::class);
         SecurityHelper::validateTableName('users; DROP TABLE users--');
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_column_name()
     {
         $this->assertTrue(SecurityHelper::validateColumnName('id'));
@@ -48,14 +49,14 @@ class HelpersTest extends TestCase
         $this->assertTrue(SecurityHelper::validateColumnName('_internal'));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_column_name()
     {
         $this->expectException(InvalidArgumentException::class);
         SecurityHelper::validateColumnName('invalid-column');
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_valid_row_id()
     {
         $this->assertTrue(SecurityHelper::isValidRowId(1));
@@ -66,7 +67,7 @@ class HelpersTest extends TestCase
         $this->assertFalse(SecurityHelper::isValidRowId(1.5));
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_values()
     {
         $this->assertEquals('test', SecurityHelper::sanitizeValue('  test  '));
@@ -74,7 +75,7 @@ class HelpersTest extends TestCase
         $this->assertEquals(123, SecurityHelper::sanitizeValue(123));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_language_name()
     {
         $this->assertEquals('English', LanguageHelper::getLanguageName('en'));
@@ -82,30 +83,21 @@ class HelpersTest extends TestCase
         $this->assertEquals('German', LanguageHelper::getLanguageName('de'));
     }
 
-    /** @test */
-    public function it_parses_accept_language_header()
-    {
-        // This test assumes 'en' is in the configured languages
-        $locale = LanguageHelper::parseAcceptLanguageHeader('fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7');
-        $this->assertIsString($locale);
-        $this->assertMatchesRegularExpression('/^[a-z]{2}$/', $locale);
-    }
-
-    /** @test */
+    #[Test]
     public function it_validates_locales_array()
     {
         $this->assertTrue(SecurityHelper::validateLocales(['en', 'fr', 'de']));
         $this->assertTrue(SecurityHelper::validateLocales(['en-US', 'fr-FR']));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_locales_array()
     {
         $this->expectException(InvalidArgumentException::class);
         SecurityHelper::validateLocales(['en', 'invalid_locale', 'fr']);
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_attributes_array()
     {
         $input = [

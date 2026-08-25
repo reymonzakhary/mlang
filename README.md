@@ -147,7 +147,9 @@ $products = Product::trWhere('status', 'active')->get();
 
 | PHP | Laravel |
 |-----|---------|
-| >= 8.1 | 10.x, 11.x, 12.x |
+| >= 8.3 | 11.x, 12.x, 13.x |
+
+> Need Laravel 10 or PHP 8.1/8.2? Use `upon/mlang:^2.1`.
 
 ### Step 1: Install
 
@@ -199,6 +201,8 @@ The package provides several Artisan commands for managing translations:
 |---------|-----------|---------|-------------|
 | `mlang:migrate` | - | `--table=TABLE_NAME`<br>`--rollback` | Add MLang columns to tables<br>Use `--rollback` to remove columns |
 | `mlang:generate` | `{model?}`<br>`{locale?}` | - | Generate translations for models<br>Optionally specify model name and locale |
+| `mlang:doctor` 🆕 | - | `--fix`<br>`--json` | Check models, columns and data (orphans, unknown locales, duplicates, coverage). Exit code 1 on problems |
+| `mlang:translate` 🆕 | `{model?}` | `--to=fr,de`<br>`--from=en` | Create missing locale rows through the configured translator driver |
 
 ### Command Examples
 
@@ -226,6 +230,13 @@ php artisan mlang:generate Category fr
 
 # Generate for all models, specific language
 php artisan mlang:generate all fr
+
+# Health check (great in CI); --fix repairs rows without row_id
+php artisan mlang:doctor
+php artisan mlang:doctor --fix --json
+
+# Fill missing FR and DE rows from EN using the translator driver
+php artisan mlang:translate Product --to=fr,de --from=en
 ```
 
 ## Using the Facade
@@ -418,6 +429,19 @@ The package offers various configuration options to fine-tune its behavior:
 // Control observer behavior during console operations
 'observe_during_console' => false,
 
+// Serve the fallback_language row when the current locale has no row (v3)
+'fallback_on_query' => false,
+
+// Propagate non-translatable attribute changes to sibling rows (v3)
+'sync_shared_attributes' => true,
+
+// Locale sources for DetectUserLanguageMiddleware, in priority order (v3)
+'detect_locale_from' => ['route', 'segment', 'query', 'session', 'header'],
+'locale_query_key' => 'lang',
+
+// TranslatorInterface implementation used by mlang:translate (v3)
+'translator' => \Upon\Mlang\Translators\NullTranslator::class,
+
 // Auto-generate translations after seeding
 'auto_generate_after_seed' => false,
 
@@ -495,24 +519,45 @@ Mlang::forModel(Category::class)->rollback();
 
 ### Language Detection
 
-To automatically detect the user's browser language:
-
-1. Add the locale middleware to your `app/Http/Kernel.php` file:
+`DetectUserLanguageMiddleware` picks the locale from, in order: a `{locale}` route parameter, the first URL segment (`/fr/products`), `?lang=fr`, the session, then the `Accept-Language` header. Only locales in `mlang.languages` are accepted; the order is configurable via `detect_locale_from`.
 
 ```php
-protected $middlewareGroups = [
-    'web' => [
-        // ...
-        \Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class,
-    ],
-    // ...
-];
+// bootstrap/app.php (Laravel 11+)
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->web(append: [\Upon\Mlang\Middleware\DetectUserLanguageMiddleware::class]);
+})
 ```
 
-To manually set the language:
+#### 🆕 Localized routes
+
 ```php
-app()->setLocale('fr');
+// routes/web.php  →  /en/products, /fr/products, … (other prefixes 404)
+Route::localized(function () {
+    Route::get('/products', [ProductController::class, 'index'])->name('products');
+});
 ```
+
+`Route::localized()` adds a `{locale}` prefix constrained to your configured languages and attaches the detection middleware.
+
+### 🆕 Auto-translation driver
+
+`mlang:translate` and `MLang::forModel(...)->translateMissing()` create the missing locale rows for every record, copying shared attributes and passing `$translatable` attributes through a driver:
+
+```php
+// config/mlang.php
+'translator' => App\Translators\DeepLTranslator::class,
+
+// app/Translators/DeepLTranslator.php
+class DeepLTranslator implements \Upon\Mlang\Contracts\TranslatorInterface
+{
+    public function translate(string $text, string $from, string $to): string
+    {
+        return $this->client->translate($text, $from, $to);
+    }
+}
+```
+
+The default `NullTranslator` copies the source text, so generated rows are ready for human editing. `CallbackTranslator` wraps a closure for tests and quick integrations.
 
 ## Query Usage
 
@@ -522,8 +567,11 @@ Both package versions provide the same query methods for working with multilingu
 
 | Scope Method | Parameters | Description | Example |
 |--------------|------------|-------------|---------|
-| `trFind()` | `int\|string $id, ?string $iso = null` | Find record by row_id in current (or specified) language | `Category::trFind(1)` |
+| `trFind()` | `int\|string $id, ?string $iso = null, ?bool $fallback = null` | Find record by row_id in current (or specified) language | `Category::trFind(1)` |
 | `trWhere()` | `array\|string\|Closure $conditions` | Query with auto language filter and id→row_id mapping | `Category::trWhere('status', 'active')` |
+| `inLocale()` | `?string $locale = null` | Only rows in the given locale | `Category::inLocale('fr')->get()` |
+| `withFallback()` | `?string $locale = null` | Rows in the locale, falling back to `fallback_language` where missing | `Category::withFallback()->get()` |
+| `withTranslations()` | – | Eager-load the `translations` relation | `Category::withTranslations()->get()` |
 
 ### Finding Records
 
@@ -569,6 +617,60 @@ Route::get('/categories/{category}', function (Category $category) {
 - The `row_id` from the URL is used to find the record
 - The current application locale (`app()->getLocale()`) determines the language
 - Returns 404 if no translation exists in the current language
+
+## 🆕 Translation Relations (v3)
+
+Every translation of a record is a sibling row sharing the same `row_id`. v3 exposes those siblings as ordinary Eloquent relations, so eager loading, API resources and admin panels work without going through the facade.
+
+```php
+$product = Product::withTranslations()->first();
+
+$product->translations;              // Collection of every locale row (incl. this one)
+$product->otherTranslations;         // every locale row except this one
+$product->translation('fr');         // the FR row, or null
+$product->translation('de', fallback: true); // DE row, or the fallback-language row
+$product->availableLocales();        // ['en', 'fr']
+$product->missingLocales();          // ['de']
+$product->hasTranslation('fr');      // true
+```
+
+### Fallback Queries
+
+By default `trWhere()` / `trFind()` return nothing for records that have no row in the current locale. Opt in to fallback per query:
+
+```php
+// FR rows, plus EN rows for records that have no FR row yet
+Product::withFallback('fr')->get();
+```
+
+…or globally via `'fallback_on_query' => true` in `config/mlang.php`, after which `trWhere()` and `trFind()` fall back automatically and fire `TranslationMissing`.
+
+### Translatable vs. Shared Attributes
+
+Declare which columns differ per language. Every other column is *shared*: changing it on one translation row propagates it to the siblings automatically (`'sync_shared_attributes' => true`).
+
+```php
+class Product extends Model implements MlangContractInterface
+{
+    use MlangTrait;
+
+    protected array $translatable = ['name', 'description'];
+}
+
+$en = Product::trFind(1, 'en');
+$en->update(['price' => 42, 'name' => 'Armchair']);
+// price is now 42 on the EN, FR and DE rows; name changed on EN only
+```
+
+### Events
+
+| Event | Fired when | Payload |
+|-------|-----------|---------|
+| `Upon\Mlang\Events\TranslationCreated` | A translation row is created (observer, `mlang:generate`, `createMultiLanguage`) | `$translation`, `$locale` |
+| `Upon\Mlang\Events\TranslationMissing` | A locale is requested that has no row (`translation()`, fallback queries) | `$model`, `$rowId`, `$locale` |
+| `Upon\Mlang\Events\SharedAttributesSynced` | Shared attributes were propagated to sibling rows | `$source`, `$attributes`, `$affected` |
+
+Listen to `TranslationMissing` to queue machine translation, notify editors, or log coverage gaps.
 
 ## Understanding Interface and Trait Relationship
 
